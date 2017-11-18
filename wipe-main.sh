@@ -75,20 +75,22 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
   		sources_available+="$drive -"
   	fi
   done
-  #sources_available=("asdfkljs0dev/sda" "" "deasfa/sdb" "" "adfasev/sdc" "")
-  echo ${drives_available[0]}
-
-  source_drive=$(whiptail --title "$brand" --menu --noitem "\nPlease select a drive to clone.\n \
-  Skip to wipe only" 22 78 12 "${drives_available[@]}"  2>&1 1>&2)
   
-  exitstatus=$?
-  if [[ ( $exitstatus != 0 ) || ( -z $source_drive ) || ( $source_drive > 1 ) ]]; then
-    echo
-    echo "Shutting down (2)..."
-    #shutdown now
-    exit
-  fi
+  #sources_available=("asdfkljs0dev/sda" "" "deasfa/sdb" "" "adfasev/sdc" "")
+  
+  #echo ${drives_available[0]}
 
+  #source_drive=$(whiptail --title "$brand" --menu --noitem "\nPlease select a drive to clone.\n \
+  #Skip to wipe only" 22 78 12 "${drives_available[@]}"  2>&1 1>&2)
+  
+  #exitstatus=$?
+  #if [[ ( $exitstatus != 0 ) || ( -z $source_drive ) || ( $source_drive > 1 ) ]]; then
+  #  echo
+  #  echo "Shutting down (2)..."
+    #shutdown now
+  #  exit
+  #fi
+  source_drive="/dev/sdb"
 
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
@@ -106,7 +108,7 @@ ${drives_selected[@]}" 20 78); then
 		for drive in $drives; do
 			if [[ "$drive_path" -ef "/dev/$drive" ]]; then
 				echo "Starting worker for drive ${drive}..."
-				sudo bash ./wipe-worker.sh $drive &
+				sudo bash ./wipe-worker.sh $drive $source_drive &
 			fi
 		done
 	done

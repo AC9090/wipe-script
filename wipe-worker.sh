@@ -10,6 +10,7 @@ fi
 MYLOGFILENAME="/var/log/wipe.log"
 
 drive=$1
+source_drive=$2
 
 disk_frozen=`hdparm -I /dev/$drive | grep frozen | grep -c not`
 disk_health=`smartctl -H /dev/$drive | grep -i "test result" | tail -c15 |awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
@@ -94,12 +95,12 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     # Run nwipe
     #
     echo -e "\e[33mDevice /dev/$drive does not support security erase. Falling back to nwipe...\e[0m"
-    #echo
-    #sleep 3s
-    #nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive &
-    #MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
-    #echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
-    #echo "$NWIPEVERSION" >> $MYLOGFILENAME
+    echo
+    sleep 3s
+    nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive &
+    MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
+    echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
+    echo "$NWIPEVERSION" >> $MYLOGFILENAME
   fi
 fi
 
@@ -109,12 +110,21 @@ wait
 #
 if [ $smart_check != 0 ] && [ $disk_health != PASSED ]; then
   echo -e "\e[31mSMART check of /dev/$drive failed. Replace hard drive.\e[0m"
-echo
+  echo
   read -p "Press any key to continue." -n1 -s
+  exit
 fi
 
 MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 
 
+if [ $source_drive == "" ]; then
+  echo
+  echo "Wipe stage complete. No source drive selected. Exiting..."
+  exit
+else
+  dd if=$source_drive of=$drive conv=noerror,sync bs=64K status=progress
 
-# dd if=$a  |ps --size 14G | dd of=$a conv=noerror,sync 
+  echo "Cloning from source complete(?)."
+  exit
+fi
