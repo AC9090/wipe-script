@@ -72,10 +72,12 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
   		fi
   	done
   	if [ $not_sel  -ne 0 ]; then
-  		sources_available+="$drive -"
+  		sources_available+="$drive"
   	fi
   done
   
+  #Having trouble getting whiptail to work.
+
   #sources_available=("asdfkljs0dev/sda" "" "deasfa/sdb" "" "adfasev/sdc" "")
   
   #echo ${drives_available[0]}
@@ -103,6 +105,7 @@ ${drives_selected[@]}" 20 78); then
     #shutdown now
     exit
   fi
+  
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
 	for drive_path in $drives_selected; do
 		for drive in $drives; do
