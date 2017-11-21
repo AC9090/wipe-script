@@ -64,24 +64,24 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     fi
     echo
     #MYTIMEVAR=`date +'%k:%M:%S'`
-    #if [ $Enhanced_Erase == 0 ]; then
-    #  echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-    #  if [[ $Erase_Estimate ]]; then
-    #    echo "Estimated time for erase is $Erase_Estimate."
-    #  else
-    #    echo "Estimated time for erase is unknown. It may take one or more hours..."
-    #  fi
-    #  #hdparm --security-erase-enhanced password /dev/$drive >/dev/null &
-    #else
-    #  echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-    #  if [[ $Erase_Estimate ]]; then
-    #    echo "Estimated time for erase is $Erase_Estimate."
-    #  else
-    #    echo "Estimated time for erase is unknown. It may take one or more hours..."
-    #  fi
-    #  #hdparm --security-erase password /dev/$drive >/dev/null &
-    #fi
-    #if [ $? -eq 0 ]; then
+    if [ $Enhanced_Erase == 0 ]; then
+      echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      if [[ $Erase_Estimate ]]; then
+        echo "Estimated time for erase is $Erase_Estimate."
+      else
+        echo "Estimated time for erase is unknown. It may take one or more hours..."
+      fi
+      hdparm --security-erase-enhanced password /dev/$drive >/dev/null &
+    else
+      echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      if [[ $Erase_Estimate ]]; then
+        echo "Estimated time for erase is $Erase_Estimate."
+      else
+        echo "Estimated time for erase is unknown. It may take one or more hours..."
+      fi
+      hdparm --security-erase password /dev/$drive >/dev/null &
+    fi
+    if [ $? -eq 0 ]; then
     #  echo
     #  echo -e "\e[32mDisk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
     #  echo
@@ -98,9 +98,9 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo
     sleep 3s
     nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive &
-    MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
-    echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
-    echo "$NWIPEVERSION" >> $MYLOGFILENAME
+    #MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
+    #echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
+    #echo "$NWIPEVERSION" >> $MYLOGFILENAME
   fi
 fi
 
@@ -117,7 +117,7 @@ fi
 
 MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 
-
+# Cloning stage.
 if [ -z $source_drive ]; then
   echo
   echo "Wipe stage complete. No source drive selected. Exiting..."

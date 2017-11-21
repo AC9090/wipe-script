@@ -63,9 +63,13 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     exit
   fi
 
+# If cloning is chosen, choose source disk.
+
   will_clone=false
   if (whiptail --title "$brand" --yesno "Would you like to clone another drive onto selected?" 20 78); then
-  will_clone = true
+    will_clone = true
+
+    # Strip disks that are selected for wipe from choices. 
     sources_available=()
     for drive in $drives_available; do
       not_sel=1
@@ -117,6 +121,7 @@ ${drives_selected[@]} " 20 78); then
   done
 fi
 
+# Wait for forked processes to finish. If information is to be gathered it will be done after this.
 wait
 
 echo "All subprocesses are complete."
