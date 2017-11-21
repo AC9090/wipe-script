@@ -118,13 +118,18 @@ fi
 MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 
 
-if [ $source_drive == "" ]; then
+if [ -z $source_drive ]; then
   echo
   echo "Wipe stage complete. No source drive selected. Exiting..."
   exit
 else
-  dd if=$source_drive of=$drive conv=noerror,sync bs=64K status=progress
+  echo "Cloning from source $source_drive to $drive"
 
-  echo "Cloning from source complete(?)."
-  exit
+  dd if=$source_drive of=/dev/$drive conv=noerror,sync bs=64K status=progress
+
+  echo "Cloning from source to /dev/$drive complete."
+
 fi
+echo "Operations complete. Exiting..."
+sleep 6
+exit
