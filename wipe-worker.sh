@@ -5,8 +5,6 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-
-
 MYLOGFILENAME="/var/log/wipe.log"
 
 drive=$1
@@ -63,7 +61,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       read -p "Press any key to continue." -n1 -s
     fi
     echo
-    #MYTIMEVAR=`date +'%k:%M:%S'`
+    MYTIMEVAR=`date +'%k:%M:%S'`
     if [ $Enhanced_Erase == 0 ]; then
       echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $Erase_Estimate ]]; then
@@ -71,7 +69,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       else
         echo "Estimated time for erase is unknown. It may take one or more hours..."
       fi
-      hdparm --security-erase-enhanced password /dev/$drive >/dev/null &
+      hdparm --security-erase-enhanced password /dev/$drive >/dev/null
     else
       echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $Erase_Estimate ]]; then
@@ -79,17 +77,17 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       else
         echo "Estimated time for erase is unknown. It may take one or more hours..."
       fi
-      hdparm --security-erase password /dev/$drive >/dev/null &
+      hdparm --security-erase password /dev/$drive >/dev/null 
     fi
     if [ $? -eq 0 ]; then
-    #  echo
-    #  echo -e "\e[32mDisk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
-    #  echo
-    #else
-    #  echo
-    #  echo -e "\e[31mErase failed. Replace hard drive.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
-    #  echo
-    #fi
+      echo
+      echo -e "\e[32mDisk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      echo
+    else
+      echo
+      echo -e "\e[31mErase failed. Replace hard drive.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      echo
+    fi
   else
     #
     # Run nwipe
@@ -97,8 +95,8 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo -e "\e[33mDevice /dev/$drive does not support security erase. Falling back to nwipe...\e[0m"
     echo
     sleep 3s
-    nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive &
-    #MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
+    nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive
+    MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
     #echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
     #echo "$NWIPEVERSION" >> $MYLOGFILENAME
   fi
@@ -130,6 +128,7 @@ else
   echo "Cloning from source to /dev/$drive complete."
 
 fi
+whiptail --title "$brand" --info "Operations Complete on /dev/$drive" 20 78)
 echo "Operations complete. Exiting..."
 sleep 6
 exit

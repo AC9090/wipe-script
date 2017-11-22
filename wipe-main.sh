@@ -67,7 +67,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
 
   will_clone=false
   if (whiptail --title "$brand" --yesno "Would you like to clone another drive onto selected?" 20 78); then
-    will_clone = true
+    will_clone=true
 
     # Strip disks that are selected for wipe from choices. 
     sources_available=()
@@ -112,9 +112,9 @@ ${drives_selected[@]} " 20 78); then
       if [[ "$drive_path" -ef "/dev/$drive" ]]; then
         echo "Starting worker for drive ${drive}..."
         if [ will_clone ] ; then
-          sudo lxterminal -e bash -c "./wipe-worker.sh $drive $source_drive" &
+          sudo xterm -e bash -c "./wipe-worker.sh $drive $source_drive" &
         else 
-          sudo lxterminal -e bash -c "./wipe-worker.sh $drive" &
+          sudo xterm -hold -e bash -c "./wipe-worker.sh $drive"  &
         fi
       fi
     done
@@ -126,3 +126,5 @@ wait
 
 echo "All subprocesses are complete."
 sleep 10
+
+
