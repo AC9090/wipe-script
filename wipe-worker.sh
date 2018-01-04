@@ -29,11 +29,11 @@ if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
 fi
 
 # Check SMART status
-# if [ $smart_check != 0 ]; then
-#  echo "SMART status for device /dev/$drive: $Disk_Health"
-# else
-#  echo -e "\e[33mDevice /dev/$drive does not support SMART or it is disabled.\e[0m"
-# fi
+if [ $smart_check != 0 ]; then
+  echo "SMART status for device /dev/$drive: $Disk_Health"
+else
+  echo -e "\e[33mDevice /dev/$drive does not support SMART or it is disabled.\e[0m"
+fi
 
 # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
@@ -46,9 +46,9 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     if [ $disk_frozen == 0 ]; then
       echo
       echo "Device /dev/$drive is frozen. Sleeping machine to unfreeze..."
-      #sleep 3s
-      #rtcwake -u -s 10 -m mem >/dev/null
-      #sleep 5s
+      sleep 3s
+      rtcwake -u -s 10 -m mem >/dev/null
+      sleep 5s
     fi
     echo "Setting password..."
     echo
@@ -62,18 +62,21 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     fi
     echo
     MYTIMEVAR=`date +'%k:%M:%S'`
-    if [ $Enhanced_Erase == 0 ]; then
+    if [ $enhanced_erase == 0 ]; then
       echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-      if [[ $Erase_Estimate ]]; then
-        echo "Estimated time for erase is $Erase_Estimate."
+      if [[ $erase_estimate ]]; then
+        echo "Estimated time for erase is $erase_estimate."
       else
-        echo "Estimated time for erase is unknown. It may take one or more hours..."
+        echo "Estimated time for erase
+
+    @Glad: Did you check if the drive was frozen? I figured out from the ata specs that it should not be frozen. There are some tricks to get it to a unfrozen state such doing a suspend to RAM and waking it up. Then my I/O error dissappeared but the master password didn't work...
+ is unknown. It may take one or more hours..."
       fi
       hdparm --security-erase-enhanced password /dev/$drive >/dev/null
     else
       echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
-      if [[ $Erase_Estimate ]]; then
-        echo "Estimated time for erase is $Erase_Estimate."
+      if [[ $erase_estimate ]]; then
+        echo "Estimated time for erase is $erase_estimate."
       else
         echo "Estimated time for erase is unknown. It may take one or more hours..."
       fi
@@ -119,6 +122,7 @@ MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 if [ -z $source_drive ]; then
   echo
   echo "Wipe stage complete. No source drive selected. Exiting..."
+  sleep 6
   exit
 else
   echo "Cloning from source $source_drive to $drive"
@@ -128,7 +132,7 @@ else
   echo "Cloning from source to /dev/$drive complete."
 
 fi
-whiptail --title "$brand" --info "Operations Complete on /dev/$drive" 20 78)
+whiptail --title "$brand" --infobox "Operations Complete on /dev/$drive" 20 78
 echo "Operations complete. Exiting..."
 sleep 6
 exit
