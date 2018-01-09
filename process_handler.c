@@ -1,3 +1,6 @@
+// TO COMPILE gcc process_handler.c -lncurses -lm
+
+
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
