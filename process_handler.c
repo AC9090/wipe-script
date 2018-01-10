@@ -61,6 +61,10 @@ int main(int argc, char *argv[])
 	int pcount = 0;
 
 	int i = 1;
+	if (argc < 2){
+		printf("Please give arguments in the following format:\n {-clone drive} [drives]\n");
+		exit(1);
+	}
 	if ((argv[1][0] == '-')){ //this indicates a clone
 		clone = &argv[1][1];
 		i++;
@@ -75,7 +79,6 @@ int main(int argc, char *argv[])
 
 	int filedes[pcount][2]; //the pipe identifiers for each process.
 	pid_t child_pids[pcount];
-
 	for (i = 0; i < pcount; i++){
 		if (pipe(filedes[i]) == -1){
 			perror("fork");
@@ -106,11 +109,22 @@ int main(int argc, char *argv[])
 
 	// The processes have started, Now it's time to start curses.
 
-	char buffer[256];
-	char text[64];
+	char buffer[1024];
+	char text[256];
 	int rows, cols;
 
 	initscr();
+
+	if(has_colors() == FALSE)
+		{	endwin();
+			printf("Your terminal does not support color\n");
+			exit(1);
+		}
+	start_color();			/* Start color 			*/
+
+	init_pair(1, COLOR_CYAN, COLOR_BLACK);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+
 	getmaxyx(stdscr, rows, cols);
 	noecho();
 	cbreak(); //typed characers are not buffered
@@ -125,6 +139,7 @@ int main(int argc, char *argv[])
 
     WINDOW *borderwin[pcount];
 	WINDOW *windows[pcount];
+	WINDOW *infoborders[pcount];
 	WINDOW *infowins[pcount];
 
 	for(i = 0; i < pcount; i++){
@@ -136,16 +151,30 @@ int main(int argc, char *argv[])
 
 		scrollok(windows[i], TRUE);
 		
-		infowins[i] = create_newwin(INFO_HT, cols/4,
+		infoborders[i] = create_newwin(INFO_HT, cols/4,
 			BORDER_UP, i * cols/4, true);
+		
+		wattron(infoborders[i], COLOR_PAIR(1));
+		box(infoborders[i], 0,0);
+		wattroff(infoborders[i], COLOR_PAIR(1));
+		wrefresh(infoborders[i]); //remember to update colors.
+
+		infowins[i] = create_newwin(INFO_HT -2 , cols/4 - 2,
+			BORDER_UP + 1, i * cols/4 + 1, false);
+
 	}
+
+
+	// char status_se[pcount][64];
+	// char status_et[pcount][64];
+	// char status_er[pcount][64];
 
 	mvprintw(0,0, "Wipe-Script Process Handler");
 
 	time_t start, current;
 
 	time(&start);
-
+	sleep(5);
 	while(1){ 
 
 		// switch(ch)
@@ -155,22 +184,45 @@ int main(int argc, char *argv[])
 
 		for (i = 0; i < pcount; i++){
 			ssize_t count = read(filedes[i][0], buffer, sizeof(buffer));
+
 			strncpy(text, buffer, count);
 
-			char test[3];
-			strncpy(test, text, 2);
-			test[2] = '\0';
-			// printw("%d",strcmp(test, SECURE_ERASE));
+			char * line = text;
+			char * end = line + count;
+			while (line){  //Find all lines in buffer.
 
-			if (strcmp(test, SECURE_ERASE) == 0){
-				mvwprintw(infowins[i], 1, 1, "SECURE_ERASE: %s", text);
-				wrefresh(infowins[i]);
-			} 
+				char * nextline = strchr(line, '\n'); // Find the next newline character.
+				if (nextline) *nextline = '\0'; // If it exists set it to endline.
 
-			if (count != 0){
-				wprintw(windows[i], text);
+				char test[3];
+				strncpy(test, line, 2);
+				test[2] = '\0';
+				// printw("%d",strcmp(test, SECURE_ERASE));
+
+				if (strcmp(test, SECURE_ERASE) == 0){
+					mvwprintw(infowins[i], 0, 0, "SECURE_ERASE: %s\n", &line[3]);
+					wrefresh(infowins[i]);
+				} else if (strcmp(test, ESTIMATED_TIME) == 0){
+					mvwprintw(infowins[i], 1, 0, "ESTIMATED_TIME: %s\n", &line[3]);
+					wrefresh(infowins[i]);
+				} else if (strcmp(test, ERROR) == 0){
+					mvwprintw(infowins[i], 1, 0, "ERROR: %s\n", &line[3]);
+
+					wattron(infoborders[i], COLOR_PAIR(2));
+					box(infoborders[i], 0,0);
+					wattroff(infoborders[i], COLOR_PAIR(2));
+					wrefresh(infoborders[i]);
+					wrefresh(infowins[i]);
+
+				} else {
+					wprintw(windows[i], "%s\n", line);
+					wrefresh(windows[i]);
+				}
+
+				line = (nextline && nextline + 1 < end) ? (nextline + 1): NULL; // If there is a next line continue if not break.
+				
 			}
-			wrefresh(windows[i]);
+			// wrefresh(windows[i]);
 
 		}
 		time(&current);
