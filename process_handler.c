@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
 		infowins[i] = create_newwin(INFO_HT -2 , cols/4 - 2,
 			BORDER_UP + 1, i * cols/4 + 1, false);
 
+		mvwprintw(infowins[i], 0,0, "TARGET: %s\n", targets[i]);
 	}
 
 
@@ -170,7 +171,6 @@ int main(int argc, char *argv[])
 	// char status_er[pcount][64];
 
 	mvprintw(0,0, "Wipe-Script Process Handler");
-
 	time_t start, current;
 
 	time(&start);
@@ -200,13 +200,13 @@ int main(int argc, char *argv[])
 				// printw("%d",strcmp(test, SECURE_ERASE));
 
 				if (strcmp(test, SECURE_ERASE) == 0){
-					mvwprintw(infowins[i], 0, 0, "SECURE_ERASE: %s\n", &line[3]);
+					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", &line[3]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ESTIMATED_TIME) == 0){
-					mvwprintw(infowins[i], 1, 0, "ESTIMATED_TIME: %s\n", &line[3]);
+					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", &line[3]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ERROR) == 0){
-					mvwprintw(infowins[i], 1, 0, "ERROR: %s\n", &line[3]);
+					mvwprintw(infowins[i], 3, 0, "ERROR: %s\n", &line[3]);
 
 					wattron(infoborders[i], COLOR_PAIR(2));
 					box(infoborders[i], 0,0);
