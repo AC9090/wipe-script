@@ -1,4 +1,4 @@
-// TO COMPILE gcc process_handler.c -lncurses -lm
+// TO COMPILE gcc -o process-handler process_handler.c -lncurses -lm
 
 
 #include <ncurses.h>
@@ -26,6 +26,11 @@
 #define SECURE_ERASE "SE"
 #define ERROR "ER"
 #define ESTIMATED_TIME "ET"
+
+
+
+
+
 
 WINDOW *create_newwin(int height, int width, int starty, int startx, bool border)
 {	WINDOW *local_win;

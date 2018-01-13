@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MYSERVERIP="192.168.0.1"
+MYMOUNTPOINT="/mnt"
 # Exit if not run as root (sudo)
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -34,11 +36,6 @@ for drive in $drives; do
  on "
 done
 
-# echo $drives_available
-# exit
-
-#drives=("sda" "Maxtor 80gb" "on" "sdb" "IBM 120Gb" "on" "sdc" "WD 300Gb" "on")
-#drives_count=3
 
 if [ $drives_count == 0 ]; then
   # No drives detected
@@ -105,26 +102,38 @@ ${drives_selected[@]} " 20 78); then
     echo "Shutting down..."
     exit
   fi
-  
+
+# Mount the nfs folder where drive information is stored.
+  mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
+
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
+  $drives_selected2=""
   for drive_path in $drives_selected; do
     for drive in $drives; do
       if [[ "$drive_path" -ef "/dev/$drive" ]]; then
-        echo "Starting worker for drive ${drive}..."
-        if [ will_clone ] ; then
-          sudo xterm -e bash -c "./wipe-worker.sh $drive $source_drive" &
-        else 
-          sudo xterm -hold -e bash -c "./wipe-worker.sh $drive"  &
-        fi
+        $drives_selected2+="$drive "
+
       fi
     done
   done
+  
+  # Start the process handler
+  if [ will_clone ] ; then
+    sudo ./process-handler $drives_selected2 &
+  else 
+    sudo ./process-handler -$source_drive $drives_selected2  &
+  fi
+  
+  # Wait for forked processes to finish.
+  wait
+
+  # Unmount the no longer needed nfs filesystem.
+  umount $MYMOUNTPOINT
+
+  echo "All subprocesses are complete."
+  
+  sleep 10
 fi
 
-# Wait for forked processes to finish. If information is to be gathered it will be done after this.
-wait
-
-echo "All subprocesses are complete."
-sleep 10
 
 

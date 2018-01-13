@@ -6,6 +6,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 MYLOGFILENAME="/var/log/wipe.log"
+DISKINFOFOLDER="/mnt/"
 
 drive=$1
 source_drive=$2
@@ -90,6 +91,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       echo
       echo -e "\e[31mErase failed. Replace hard drive.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
+      exit
     fi
   else
     #
@@ -102,6 +104,17 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
     #echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
     #echo "$NWIPEVERSION" >> $MYLOGFILENAME
+
+    if [ $? -eq 0 ]; then
+      echo
+      echo "Nwipe completed successfully."
+      echo
+    else
+      echo
+      echo "ER Nwipe failed."
+      echo
+      exit
+    fi
   fi
 fi
 
@@ -121,9 +134,8 @@ MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 # Cloning stage.
 if [ -z $source_drive ]; then
   echo
-  echo "Wipe stage complete. No source drive selected. Exiting..."
-  sleep 6
-  exit
+  echo "Wipe stage complete. No source drive selected."
+  echo  
 else
   echo "Cloning from source $source_drive to $drive"
 
@@ -132,7 +144,10 @@ else
   echo "Cloning from source to /dev/$drive complete."
 
 fi
-whiptail --title "$brand" --infobox "Operations Complete on /dev/$drive" 20 78
+
+hdparm -I /dev/$drive > $DISKINFOFOLDER/$disk_serial
+
+#whiptail --title "$brand" --infobox "Operations Complete on /dev/$drive" 20 78
 echo "Operations complete. Exiting..."
 sleep 6
 exit
