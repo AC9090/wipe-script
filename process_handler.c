@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
+#include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -110,6 +110,8 @@ int main(int argc, char *argv[])
 		}
 		child_pids[i] = pid;
 		close(filedes[i][1]);
+		int retval = fcntl( filedes[i][0], F_SETFL, fcntl(filedes[i][0], F_GETFL) | O_NONBLOCK);
+        printf("Ret from fcntl: %d\n", retval);
 	}
 
 	// The processes have started, Now it's time to start curses.
@@ -180,7 +182,6 @@ int main(int argc, char *argv[])
 	time_t start, current;
 
 	time(&start);
-	sleep(5);
 	while(1){ 
 
 		// switch(ch)
@@ -191,8 +192,8 @@ int main(int argc, char *argv[])
 		for (i = 0; i < pcount; i++){
 			ssize_t count = read(filedes[i][0], buffer, sizeof(buffer));
 
+			if (count <= 0) continue;
 			strncpy(text, buffer, count);
-
 			char * line = text;
 			char * end = line + count;
 			while (line){  //Find all lines in buffer.
@@ -233,7 +234,8 @@ int main(int argc, char *argv[])
 		}
 		time(&current);
 		double elapsed = difftime(current,start);
-		mvprintw(1,0, "TIME ELAPSED: %0.lf minutes, %0.lf seconds", floor(elapsed / 60l), fmod(elapsed, 60l));		refresh();
+		mvprintw(1,0, "TIME ELAPSED: %0.lf minutes, %0.lf seconds", floor(elapsed / 60l), fmod(elapsed, 60l));
+		refresh();
 
 		bool fin = true; // Check if all child processes are finished.
 		for (i=0; i < pcount; i ++){

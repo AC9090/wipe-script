@@ -120,13 +120,11 @@ ${drives_selected[@]} " 20 78); then
 
   # Start the process handler
   if [ will_clone ] ; then
-    sudo ./process-handler -$source_drive $drives_selected2  &
+    ./process-handler -$source_drive $drives_selected2
   else 
-    sudo ./process-handler $drives_selected2 &
+    ./process-handler $drives_selected2
   fi
   
-  # Wait for forked processes to finish.
-  wait
 
   # Unmount the no longer needed nfs filesystem.
   umount $MYMOUNTPOINT
