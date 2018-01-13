@@ -104,24 +104,25 @@ ${drives_selected[@]} " 20 78); then
   fi
 
 # Mount the nfs folder where drive information is stored.
-  mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
+  #mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
 
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
-  $drives_selected2=""
+  drives_selected2=""
   for drive_path in $drives_selected; do
     for drive in $drives; do
       if [[ "$drive_path" -ef "/dev/$drive" ]]; then
-        $drives_selected2+="$drive "
+        drives_selected2+="$drive "
 
       fi
     done
   done
-  
+
+
   # Start the process handler
   if [ will_clone ] ; then
-    sudo ./process-handler $drives_selected2 &
-  else 
     sudo ./process-handler -$source_drive $drives_selected2  &
+  else 
+    sudo ./process-handler $drives_selected2 &
   fi
   
   # Wait for forked processes to finish.

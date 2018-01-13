@@ -99,12 +99,12 @@ int main(int argc, char *argv[])
 			close(filedes[i][0]);
 			close(filedes[i][1]);
 			sleep(2); //wait for ncurses to be set up
-			// if (!clone){
-				// printf("Target %s will be initialized with no clone.\n", targets[i]);
-			// } else {
-				// printf("Target %s will be initialized with clone %s.\n", targets[i], clone);
-			// }
-			execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
+			if (!clone){
+				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], (char*)0);
+			} else {
+				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], clone, (char*)0);
+			}
+			//execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
 			perror("execl");
 			_exit(1); //dunno why the exit 1
 		}
@@ -167,7 +167,8 @@ int main(int argc, char *argv[])
 		infowins[i] = create_newwin(INFO_HT -2 , cols/4 - 2,
 			BORDER_UP + 1, i * cols/4 + 1, false);
 
-		mvwprintw(infowins[i], 0,0, "TARGET: %s\n", targets[i]);
+		mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
+		wrefresh(infowins[i]);
 	}
 
 
@@ -233,8 +234,28 @@ int main(int argc, char *argv[])
 		time(&current);
 		double elapsed = difftime(current,start);
 		mvprintw(1,0, "TIME ELAPSED: %0.lf minutes, %0.lf seconds", floor(elapsed / 60l), fmod(elapsed, 60l));		refresh();
+
+		bool fin = true; // Check if all child processes are finished.
+		for (i=0; i < pcount; i ++){
+			int stat = 0;
+			pid_t return_pid = waitpid(child_pids[i], &stat, WNOHANG);
+			if (return_pid == -1){
+				exit(1);
+			} else if (return_pid == 0) {
+				fin = false;
+				break;
+			} //else if (return_pid == child_pids[i] && fin){
+			//
+			//}
+		}
+		if (fin) {
+			break;
+		}
+
 		sleep(1);
 
 	}
-	sleep(10);
+	endwin();
+	printf("Exiting process_handler.\n\n");
+	sleep(2);
 }
