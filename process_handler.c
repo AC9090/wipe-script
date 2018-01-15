@@ -26,6 +26,7 @@
 #define SECURE_ERASE "SE"
 #define ERROR "ER"
 #define ESTIMATED_TIME "ET"
+#define SERIAL_NUMBER "SN"
 
 
 
@@ -99,12 +100,15 @@ int main(int argc, char *argv[])
 			close(filedes[i][0]);
 			close(filedes[i][1]);
 			sleep(2); //wait for ncurses to be set up
+#ifdef TEST
+			execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
+#else
 			if (!clone){
 				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], (char*)0);
 			} else {
 				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], clone, (char*)0);
 			}
-			//execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
+#endif			
 			perror("execl");
 			_exit(1); //dunno why the exit 1
 		}
@@ -131,6 +135,7 @@ int main(int argc, char *argv[])
 
 	init_pair(1, COLOR_CYAN, COLOR_BLACK);
 	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_GREEN, COLOR_BLACK);
 
 	getmaxyx(stdscr, rows, cols);
 	noecho();
@@ -173,10 +178,10 @@ int main(int argc, char *argv[])
 		wrefresh(infowins[i]);
 	}
 
-
-	// char status_se[pcount][64];
-	// char status_et[pcount][64];
-	// char status_er[pcount][64];
+	char status_sn[pcount][64];
+	char status_se[pcount][64];
+	char status_et[pcount][64];
+	char status_er[pcount][64];
 
 	mvprintw(0,0, "Wipe-Script Process Handler");
 	time_t start, current;
@@ -207,18 +212,34 @@ int main(int argc, char *argv[])
 				// printw("%d",strcmp(test, SECURE_ERASE));
 
 				if (strcmp(test, SECURE_ERASE) == 0){
-					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", &line[3]);
+					strcpy(status_se[i], &line[3]);
+					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ESTIMATED_TIME) == 0){
-					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", &line[3]);
+					strcpy(status_et[i], &line[3]);
+					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
+					wrefresh(infowins[i]);
+				} else if (strcmp(test, SERIAL_NUMBER) == 0){
+					strcpy(status_sn[i], &line[3]);
+					mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ERROR) == 0){
-					mvwprintw(infowins[i], 3, 0, "ERROR: %s\n", &line[3]);
-
 					wattron(infoborders[i], COLOR_PAIR(2));
 					box(infoborders[i], 0,0);
 					wattroff(infoborders[i], COLOR_PAIR(2));
 					wrefresh(infoborders[i]);
+
+					strcpy(status_er[i], &line[3]);
+
+					wattron(infowins[i], COLOR_PAIR(2));
+					mvwprintw(infowins[i], 4, 0, "ERROR: %s\n", status_er[i]);
+					wattroff(infowins[i], COLOR_PAIR(2));
+
+					mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
+					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
+					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
+					mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
+
 					wrefresh(infowins[i]);
 
 				} else {
@@ -245,12 +266,29 @@ int main(int argc, char *argv[])
 				exit(1);
 			} else if (return_pid == 0) {
 				fin = false;
-				break;
-			} //else if (return_pid == child_pids[i] && fin){
-			//
-			//}
+			} else if (return_pid == child_pids[i]){
+				wattron(infoborders[i], COLOR_PAIR(3));
+				box(infoborders[i], 0,0);
+				wattroff(infoborders[i], COLOR_PAIR(3));
+
+				wrefresh(infoborders[i]);
+
+				wattron(infowins[i], COLOR_PAIR(3));
+				mvwprintw(infowins[i], 4, 0, "****DONE****\n");
+				wattroff(infowins[i], COLOR_PAIR(3));
+
+				mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
+				mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
+				mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
+				mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
+
+				wrefresh(infowins[i]);
+
+
+			}
 		}
 		if (fin) {
+			sleep(20);
 			break;
 		}
 

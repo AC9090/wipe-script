@@ -68,10 +68,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       if [[ $erase_estimate ]]; then
         echo "Estimated time for erase is $erase_estimate."
       else
-        echo "Estimated time for erase
-
-    @Glad: Did you check if the drive was frozen? I figured out from the ata specs that it should not be frozen. There are some tricks to get it to a unfrozen state such doing a suspend to RAM and waking it up. Then my I/O error dissappeared but the master password didn't work...
- is unknown. It may take one or more hours..."
+        echo "Estimated time for erase is unknown. It may take one or more hours..."
       fi
       hdparm --security-erase-enhanced password /dev/$drive >/dev/null
     else
