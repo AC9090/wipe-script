@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
 	init_pair(1, COLOR_CYAN, COLOR_BLACK);
 	init_pair(2, COLOR_RED, COLOR_BLACK);
 	init_pair(3, COLOR_GREEN, COLOR_BLACK);
+	init_pair(4, COLOR_YELLOW, COLOR_BLUE);
 
 	getmaxyx(stdscr, rows, cols);
 	noecho();
@@ -178,10 +179,34 @@ int main(int argc, char *argv[])
 		wrefresh(infowins[i]);
 	}
 
-	char status_sn[pcount][64];
-	char status_se[pcount][64];
-	char status_et[pcount][64];
-	char status_er[pcount][64];
+	char (*status_sn)[64];
+	status_sn = malloc(pcount * sizeof(char[64]));
+	char (*status_se)[64];
+	status_se = malloc(pcount * sizeof(char[64]));
+	char (*status_et)[64];
+	status_et = malloc(pcount * sizeof(char[64]));
+	char (*status_er)[64];
+	status_er = malloc(pcount * sizeof(char[64]));
+
+	long (*est_time);
+	est_time = malloc(pcount * sizeof(long));
+	for (i = 0; i < pcount; i++){
+		est_time[i] = 0;
+	}
+
+	char (*pbars)[cols/4 -2];
+	pbars = malloc(pcount * sizeof(char) * (cols/4 -1));
+	float *progress = malloc(pcount * sizeof(float));
+	int j;
+	for (j = 0; j < pcount; j++){
+		progress[j] = 0;
+		pbars[j][0] = '[';
+		pbars[j][cols/4 -3] = ']';
+		pbars[j][cols/4 - 2] = '\0';
+		for (i = 1; i < cols/4 -3; i ++ )
+			pbars[j][i]=' ';
+	}
+
 
 	mvprintw(0,0, "Wipe-Script Process Handler");
 	time_t start, current;
@@ -194,7 +219,38 @@ int main(int argc, char *argv[])
 		// 	case KEY_LEFT:
 		// }
 
-		for (i = 0; i < pcount; i++){
+		time(&current);
+		double elapsed = difftime(current,start);
+		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/60l),
+			floor((elapsed)/60l), fmod(elapsed, 60l));
+		refresh();
+
+		for (i = 0; i < pcount; i++){ // Loop through each subprocess.
+
+			if (elapsed > est_time[i]){
+				mvwprintw(infowins[i], 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - est_time[i]) / (60l * 60l)),
+					floor((elapsed - est_time[i])/60l), fmod(elapsed - est_time[i], 60l));
+			} else {
+				mvwprintw(infowins[i], 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((est_time[i] - elapsed) / (60l * 60l)),
+					floor(fmod((est_time[i] - elapsed)/60l, 60l)), fmod(est_time[i] - elapsed, 60l));
+
+				if (((float)elapsed / (float)est_time[i]) > ((progress[i] + 1) / (cols/4 - 3))){
+					pbars[i][(int)progress[i]+1] = '=';
+					progress[i] ++;
+
+				}
+
+			}
+			wattron(infowins[i], COLOR_PAIR(4));
+			wattron(infowins[i], A_BOLD);
+			mvwprintw(infowins[i], 5,0, pbars[i]);
+			wattroff(infowins[i], A_BOLD);
+			wattroff(infowins[i], COLOR_PAIR(4));
+
+			wrefresh(infowins[i]);
+
+			// Process information passed through each pipe.
+
 			ssize_t count = read(filedes[i][0], buffer, sizeof(buffer));
 
 			if (count <= 0) continue;
@@ -219,6 +275,20 @@ int main(int argc, char *argv[])
 					strcpy(status_et[i], &line[3]);
 					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
 					wrefresh(infowins[i]);
+
+					char temp[5];
+					int s = 0;
+					while((status_et[i][s] <= '9' && status_et[i][s] >= '0' )){
+						s++;		
+					}
+
+					if (s > 0){	
+						strncpy(temp ,status_et[i], s);
+						est_time[i] = (long) atoi(temp) * 60;
+					} else {
+						est_time[i] = 0;
+					}
+
 				} else if (strcmp(test, SERIAL_NUMBER) == 0){
 					strcpy(status_sn[i], &line[3]);
 					mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
@@ -232,7 +302,7 @@ int main(int argc, char *argv[])
 					strcpy(status_er[i], &line[3]);
 
 					wattron(infowins[i], COLOR_PAIR(2));
-					mvwprintw(infowins[i], 4, 0, "ERROR: %s\n", status_er[i]);
+					mvwprintw(infowins[i], 5, 0, "ERROR: %s\n", status_er[i]);
 					wattroff(infowins[i], COLOR_PAIR(2));
 
 					mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
@@ -253,10 +323,6 @@ int main(int argc, char *argv[])
 			// wrefresh(windows[i]);
 
 		}
-		time(&current);
-		double elapsed = difftime(current,start);
-		mvprintw(1,0, "TIME ELAPSED: %0.lf minutes, %0.lf seconds", floor(elapsed / 60l), fmod(elapsed, 60l));
-		refresh();
 
 		bool fin = true; // Check if all child processes are finished.
 		for (i=0; i < pcount; i ++){
@@ -274,7 +340,7 @@ int main(int argc, char *argv[])
 				wrefresh(infoborders[i]);
 
 				wattron(infowins[i], COLOR_PAIR(3));
-				mvwprintw(infowins[i], 4, 0, "****DONE****\n");
+				mvwprintw(infowins[i], 5, 0, "****DONE****\n");
 				wattroff(infowins[i], COLOR_PAIR(3));
 
 				mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
@@ -288,7 +354,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (fin) {
-			sleep(20);
+			sleep(20); //Should be a prompt for confirmation here.
 			break;
 		}
 
@@ -298,4 +364,5 @@ int main(int argc, char *argv[])
 	endwin();
 	printf("Exiting process_handler.\n\n");
 	sleep(2);
+	exit(0);
 }

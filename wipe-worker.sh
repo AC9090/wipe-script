@@ -67,16 +67,21 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $erase_estimate ]]; then
         echo "Estimated time for erase is $erase_estimate."
+        echo "ET $erase_estimate"
+
       else
         echo "Estimated time for erase is unknown. It may take one or more hours..."
+        echo "ET Unknown"
       fi
       hdparm --security-erase-enhanced password /dev/$drive >/dev/null
     else
       echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $erase_estimate ]]; then
         echo "Estimated time for erase is $erase_estimate."
+        echo "ET $erase_estimate"
       else
         echo "Estimated time for erase is unknown. It may take one or more hours..."
+        echo "ET Unknown"
       fi
       hdparm --security-erase password /dev/$drive >/dev/null 
     fi
@@ -95,6 +100,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     # Run nwipe
     #
     echo -e "\e[33mDevice /dev/$drive does not support security erase. Falling back to nwipe...\e[0m"
+    echo "ET Unknown"
     echo
     sleep 3s
     nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive
@@ -115,13 +121,12 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   fi
 fi
 
-wait
 #
 # If SMART is supported and drive is unhealthy, print message to replace drive
 #
 if [ $smart_check != 0 ] && [ $disk_health != PASSED ]; then
   echo -e "\e[31mSMART check of /dev/$drive failed. Replace hard drive.\e[0m"
-  echo
+  echo  "ER SMART check failed."
   read -p "Press any key to continue." -n1 -s
   exit
 fi
