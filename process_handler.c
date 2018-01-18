@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
 		time(&current);
 		double elapsed = difftime(current,start);
-		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/60l),
+		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
 			floor((elapsed)/60l), fmod(elapsed, 60l));
 		refresh();
 
@@ -230,6 +230,8 @@ int main(int argc, char *argv[])
 			if (elapsed > est_time[i]){
 				mvwprintw(infowins[i], 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - est_time[i]) / (60l * 60l)),
 					floor((elapsed - est_time[i])/60l), fmod(elapsed - est_time[i], 60l));
+				if (clone)
+					pbars[i][5] = "CLONING!";
 			} else {
 				mvwprintw(infowins[i], 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((est_time[i] - elapsed) / (60l * 60l)),
 					floor(fmod((est_time[i] - elapsed)/60l, 60l)), fmod(est_time[i] - elapsed, 60l));
