@@ -5,7 +5,7 @@ ET 10min"
 
 echo "SN HD10001"
 
-for i in $(seq 1 100); do
+for i in $(seq 1 20); do
 	echo "LINE NUMBER $i"
 	sleep 30
 done

@@ -28,8 +28,12 @@
 #define ESTIMATED_TIME "ET"
 #define SERIAL_NUMBER "SN"
 
+#define PRINT_TARGET(iw, target) mvwprintw(iw, 0,0, "TARGET: /dev/%s\n", target)
+#define PRINT_SE(iw, se) mvwprintw(iw, 1, 0, "SECURE_ERASE: %s\n", se)
+#define PRINT_SN(iw, sn) mvwprintw(iw, 2, 0, "SERIAL: %s\n", sn)
+#define PRINT_ET(iw, et) mvwprintw(iw, 3, 0, "ESTIMATED_TIME: %s\n", et)
 
-
+#define PRINT_ER(iw, er) mvwprintw(infowins[i], 5, 0, "ERROR: %s\n", status_er[i])
 
 
 
@@ -230,8 +234,8 @@ int main(int argc, char *argv[])
 			if (elapsed > est_time[i]){
 				mvwprintw(infowins[i], 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - est_time[i]) / (60l * 60l)),
 					floor((elapsed - est_time[i])/60l), fmod(elapsed - est_time[i], 60l));
-				if (clone)
-					pbars[i][5] = "CLONING!";
+				//if (clone)
+				//	pbars[i][5] = "CLONING!";
 			} else {
 				mvwprintw(infowins[i], 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((est_time[i] - elapsed) / (60l * 60l)),
 					floor(fmod((est_time[i] - elapsed)/60l, 60l)), fmod(est_time[i] - elapsed, 60l));
@@ -271,11 +275,11 @@ int main(int argc, char *argv[])
 
 				if (strcmp(test, SECURE_ERASE) == 0){
 					strcpy(status_se[i], &line[3]);
-					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
+					PRINT_SE(infowins[i], status_se[i]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ESTIMATED_TIME) == 0){
 					strcpy(status_et[i], &line[3]);
-					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
+					PRINT_ET(infowins[i], status_et[i]);
 					wrefresh(infowins[i]);
 
 					char temp[5];
@@ -293,7 +297,7 @@ int main(int argc, char *argv[])
 
 				} else if (strcmp(test, SERIAL_NUMBER) == 0){
 					strcpy(status_sn[i], &line[3]);
-					mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
+					PRINT_SN(infowins[i], status_sn[i]);
 					wrefresh(infowins[i]);
 				} else if (strcmp(test, ERROR) == 0){
 					wattron(infoborders[i], COLOR_PAIR(2));
@@ -304,13 +308,13 @@ int main(int argc, char *argv[])
 					strcpy(status_er[i], &line[3]);
 
 					wattron(infowins[i], COLOR_PAIR(2));
-					mvwprintw(infowins[i], 5, 0, "ERROR: %s\n", status_er[i]);
+					PRINT_ER(infowins[i], status_er[i]);
 					wattroff(infowins[i], COLOR_PAIR(2));
 
-					mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
-					mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
-					mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
-					mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
+					PRINT_TARGET(infowins[i], targets[i]);
+					PRINT_SE(infowins[i], status_se[i]);
+					PRINT_SN(infowins[i], status_sn[i]);
+					PRINT_ET(infowins[i], status_et[i]);
 
 					wrefresh(infowins[i]);
 
@@ -345,10 +349,10 @@ int main(int argc, char *argv[])
 				mvwprintw(infowins[i], 5, 0, "****DONE****\n");
 				wattroff(infowins[i], COLOR_PAIR(3));
 
-				mvwprintw(infowins[i], 0,0, "TARGET: /dev/%s\n", targets[i]);
-				mvwprintw(infowins[i], 1, 0, "SECURE_ERASE: %s\n", status_se[i]);
-				mvwprintw(infowins[i], 2, 0, "ESTIMATED_TIME: %s\n", status_et[i]);
-				mvwprintw(infowins[i], 3, 0, "SERIAL_NUM: %s\n", status_sn[i]);
+				PRINT_TARGET(infowins[i], targets[i]);
+				PRINT_SE(infowins[i], status_se[i]);
+				PRINT_SN(infowins[i], status_sn[i]);
+				PRINT_ET(infowins[i], status_et[i]);
 
 				wrefresh(infowins[i]);
 
@@ -356,7 +360,12 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (fin) {
-			sleep(20); //Should be a prompt for confirmation here.
+			
+			attron(COLOR_PAIR(3));
+			mvprintw(rows - 1, 0, "All processes are complete! Press any key to continue...");
+			attroff(COLOR_PAIR(3));
+			refresh();
+			getchar();
 			break;
 		}
 

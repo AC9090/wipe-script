@@ -40,7 +40,7 @@ fi
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   if [ $security_erase != 0 ]; then
     # Run hdparm erase
-    echo
+    echo  
     echo -e "\e[32mThis device supports security erase.\e[0m"
 
     # Check if drive is frozen and sleep machine if necessary
@@ -64,6 +64,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo
     MYTIMEVAR=`date +'%k:%M:%S'`
     if [ $enhanced_erase == 0 ]; then
+      echo "SE Enhanced"
       echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $erase_estimate ]]; then
         echo "Estimated time for erase is $erase_estimate."
@@ -75,6 +76,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       fi
       hdparm --security-erase-enhanced password /dev/$drive >/dev/null
     else
+      echo "SE Enabled"
       echo "Secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo -e "This may take one or more hours..."  && echo "Wiping device using secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $erase_estimate ]]; then
         echo "Estimated time for erase is $erase_estimate."
@@ -99,6 +101,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     #
     # Run nwipe
     #
+    echo "Disabled"
     echo -e "\e[33mDevice /dev/$drive does not support security erase. Falling back to nwipe...\e[0m"
     echo "ET Unknown"
     echo
