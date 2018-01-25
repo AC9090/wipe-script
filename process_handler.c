@@ -105,7 +105,11 @@ int main(int argc, char *argv[])
 			close(filedes[i][1]);
 			sleep(2); //wait for ncurses to be set up
 #ifdef TEST
-			execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
+			if (i == 1){
+				execl("./pipe_test2.sh", "./pipe_test.sh", (char*) NULL);				
+			} else {
+				execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
+			}
 #else
 			if (!clone){
 				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], (char*)0);
@@ -114,12 +118,12 @@ int main(int argc, char *argv[])
 			}
 #endif			
 			perror("execl");
+			//exit(0);
 			_exit(1); //dunno why the exit 1
 		}
 		child_pids[i] = pid;
 		close(filedes[i][1]);
 		int retval = fcntl( filedes[i][0], F_SETFL, fcntl(filedes[i][0], F_GETFL) | O_NONBLOCK);
-        printf("Ret from fcntl: %d\n", retval);
 	}
 
 	// The processes have started, Now it's time to start curses.
@@ -194,8 +198,13 @@ int main(int argc, char *argv[])
 
 	long (*est_time);
 	est_time = malloc(pcount * sizeof(long));
+
+	int *status_pid;
+	status_pid = malloc(sizeof(int) * pcount);
+
 	for (i = 0; i < pcount; i++){
 		est_time[i] = 0;
+		status_pid[i] = 0;
 	}
 
 	char (*pbars)[cols/4 -2];
@@ -210,7 +219,6 @@ int main(int argc, char *argv[])
 		for (i = 1; i < cols/4 -3; i ++ )
 			pbars[j][i]=' ';
 	}
-
 
 	mvprintw(0,0, "Wipe-Script Process Handler");
 	time_t start, current;
@@ -290,6 +298,7 @@ int main(int argc, char *argv[])
 
 					if (s > 0){	
 						strncpy(temp ,status_et[i], s);
+						temp[s] = '\0';
 						est_time[i] = (long) atoi(temp) * 60;
 					} else {
 						est_time[i] = 0;
@@ -333,12 +342,16 @@ int main(int argc, char *argv[])
 		bool fin = true; // Check if all child processes are finished.
 		for (i=0; i < pcount; i ++){
 			int stat = 0;
-			pid_t return_pid = waitpid(child_pids[i], &stat, WNOHANG);
-			if (return_pid == -1){
-				exit(1);
-			} else if (return_pid == 0) {
+			if (status_pid[i] == 0){
+				status_pid[i] = waitpid(child_pids[i], &stat, WNOHANG);
+			}
+			if (status_pid[i] == -1){
+				mvprintw(0,0, "return_pid == -1");
+				refresh();
+				sleep(10);
+			} else if (status_pid[i] == 0) {
 				fin = false;
-			} else if (return_pid == child_pids[i]){
+			} else if (status_pid[i] == child_pids[i]){
 				wattron(infoborders[i], COLOR_PAIR(3));
 				box(infoborders[i], 0,0);
 				wattroff(infoborders[i], COLOR_PAIR(3));
@@ -365,6 +378,7 @@ int main(int argc, char *argv[])
 			mvprintw(rows - 1, 0, "All processes are complete! Press any key to continue...");
 			attroff(COLOR_PAIR(3));
 			refresh();
+			fseek(stdin,0,SEEK_END); // Empty stdin.
 			getchar();
 			break;
 		}
