@@ -35,6 +35,9 @@
 
 #define PRINT_ER(iw, er) mvwprintw(infowins[i], 5, 0, "ERROR: %s\n", status_er[i])
 
+#define STATUS_RUNNING 0
+#define STATUS_DONE 1
+#define STATUS_ERROR 2
 
 
 WINDOW *create_newwin(int height, int width, int starty, int startx, bool border)
@@ -145,33 +148,35 @@ int main(int argc, char *argv[])
 	init_pair(2, COLOR_RED, COLOR_BLACK);
 	init_pair(3, COLOR_GREEN, COLOR_BLACK);
 	init_pair(4, COLOR_YELLOW, COLOR_BLUE);
+	init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(6, COLOR_WHITE, COLOR_BLACK);
 
 	getmaxyx(stdscr, rows, cols);
+	timeout(0);
 	noecho();
 	cbreak(); //typed characers are not buffered
 	curs_set(0);
 	keypad(stdscr, TRUE);
 
-	int ch; //the character on the keyboard that has been pressed
     refresh();
 
     mvprintw(rows - 1, 0, "Press CTRL^C to exit (not recommended).");
 
 
     WINDOW *borderwin[pcount];
-	WINDOW *windows[pcount];
+	WINDOW *padwins[pcount];
 	WINDOW *infoborders[pcount];
 	WINDOW *infowins[pcount];
+	int *pad_scroll;
+	pad_scroll = malloc(pcount * sizeof(int));
 
 	for(i = 0; i < pcount; i++){
 		borderwin[i] = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT), cols/4,
 			BORDER_UP + INFO_HT, i * cols/4, true);
 
-		windows[i] = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT - 2), cols/4 - 2,
-			BORDER_UP + INFO_HT + 1, i * cols/4 + 1, false);
-
-		scrollok(windows[i], TRUE);
-		
+		padwins[i] = newpad(1000, cols/4 - 2);
+		scrollok(padwins[i], TRUE);
+				
 		infoborders[i] = create_newwin(INFO_HT, cols/4,
 			BORDER_UP, i * cols/4, true);
 		
@@ -202,16 +207,15 @@ int main(int argc, char *argv[])
 	int *status_pid;
 	status_pid = malloc(sizeof(int) * pcount);
 
-	for (i = 0; i < pcount; i++){
-		est_time[i] = 0;
-		status_pid[i] = 0;
-	}
 
 	char (*pbars)[cols/4 -2];
 	pbars = malloc(pcount * sizeof(char) * (cols/4 -1));
 	float *progress = malloc(pcount * sizeof(float));
+
 	int j;
 	for (j = 0; j < pcount; j++){
+		est_time[j] = 0;
+		status_pid[j] = 0;
 		progress[j] = 0;
 		pbars[j][0] = '[';
 		pbars[j][cols/4 -3] = ']';
@@ -224,12 +228,87 @@ int main(int argc, char *argv[])
 	time_t start, current;
 
 	time(&start);
-	while(1){ 
 
-		// switch(ch)
-		// {
-		// 	case KEY_LEFT:
-		// }
+	int ch, wsel,y,x;
+	wsel =0;
+	while(1){ 
+		ch = getch();
+		switch(ch)
+		{
+			case KEY_LEFT:
+				wattron(borderwin[wsel], COLOR_PAIR(6));
+				box(borderwin[wsel], 0,0);
+				wattron(borderwin[wsel], COLOR_PAIR(6));
+				wrefresh(borderwin[wsel]);
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+				if (wsel > 0){
+					wsel --;
+				} else {
+					wsel += pcount -1;
+				}
+
+				wattron(borderwin[wsel], COLOR_PAIR(5));
+				box(borderwin[wsel], 0,0);
+				wattron(borderwin[wsel], COLOR_PAIR(5));
+				wrefresh(borderwin[wsel]);
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+				break;
+			
+			case KEY_RIGHT:
+				wattron(borderwin[wsel], COLOR_PAIR(6));
+				box(borderwin[wsel], 0,0);
+				wattron(borderwin[wsel], COLOR_PAIR(6));
+				wrefresh(borderwin[wsel]);
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+				if (wsel < pcount -1){
+					wsel ++;
+				} else {
+					wsel = 0;
+				}
+
+				wattron(borderwin[wsel], COLOR_PAIR(5));
+				box(borderwin[wsel], 0,0);
+				wattron(borderwin[wsel], COLOR_PAIR(5));
+				wrefresh(borderwin[wsel]);
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+
+				break;
+
+			case KEY_UP:
+				if (pad_scroll[wsel] > 0)
+					pad_scroll[wsel] --;
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+				break;
+
+			case KEY_DOWN:
+
+				getyx(padwins[wsel],y,x);
+				if(pad_scroll[wsel] < y )
+					pad_scroll[wsel] ++;
+
+				prefresh(padwins[wsel], pad_scroll[wsel] - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/4 + 1,
+									(rows - BORDER_DN  - 2), (wsel+1) * cols/4 - 1);
+
+				break;
+
+			default:
+				break;
+		}
 
 		time(&current);
 		double elapsed = difftime(current,start);
@@ -328,8 +407,13 @@ int main(int argc, char *argv[])
 					wrefresh(infowins[i]);
 
 				} else {
-					wprintw(windows[i], "%s\n", line);
-					wrefresh(windows[i]);
+					wprintw(padwins[i], "%s\n", line);
+					getyx(padwins[i],y,x);
+					pad_scroll[i] = y;
+					prefresh(padwins[i], y - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, i * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (i+1) * cols/4 - 1);
+					// wrefresh(windows[i]);
+
 				}
 
 				line = (nextline && nextline + 1 < end) ? (nextline + 1): NULL; // If there is a next line continue if not break.
