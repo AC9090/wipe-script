@@ -33,7 +33,7 @@
 #define PRINT_SN(iw, sn) mvwprintw(iw, 2, 0, "SERIAL: %s\n", sn)
 #define PRINT_ET(iw, et) mvwprintw(iw, 3, 0, "ESTIMATED_TIME: %s\n", et)
 
-#define PRINT_ER(iw, er) mvwprintw(wwin[i].infowin, 5, 0, "ERROR: %s\n", status_er[i])
+#define PRINT_ER(iw, er) mvwprintw(iw, 5, 0, "ERROR: %s\n", er)
 
 #define STATUS_RUNNING 0
 #define STATUS_DONE 1
@@ -42,6 +42,7 @@
 typedef struct WipeStatus WipeStatus;
 
 struct WipeStatus {
+	char target[8];
 	char status_sn[64];
 	char status_se[64];
 	char status_et[64];
@@ -61,10 +62,76 @@ struct WipeStatus {
 typedef struct WipeWIN WipeWIN;
 
 struct WipeWIN {
+	int i;
 	WINDOW *borderwin;
 	WINDOW *infoborder;
 	WINDOW *infowin;
 };
+
+
+int rows, cols;
+
+
+void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed)
+{
+	if (s->status == STATUS_RUNNING){
+		wattron(w->infoborder, COLOR_PAIR(1));
+		box(w->infoborder, 0,0);
+		wattroff(w->infoborder, COLOR_PAIR(1));
+	} else if (s->status == STATUS_DONE){
+		wattron(w->infoborder, COLOR_PAIR(3));
+		box(w->infoborder, 0,0);
+		wattroff(w->infoborder, COLOR_PAIR(3));
+	} else if (s->status == STATUS_ERROR) {
+		wattron(w->infoborder, COLOR_PAIR(2));
+		box(w->infoborder, 0,0);
+		wattroff(w->infoborder, COLOR_PAIR(2));
+
+		wattron(w->infowin, COLOR_PAIR(2));
+		PRINT_ER(w->infowin, s->status_er);
+		wattroff(w->infowin, COLOR_PAIR(2));
+
+	} else {
+		//Problem.
+	}
+
+	PRINT_TARGET(w->infowin, s->target);
+	PRINT_SE(w->infowin, s->status_se);
+	PRINT_SN(w->infowin, s->status_sn);
+	PRINT_ET(w->infowin, s->status_et);
+
+
+
+
+	if (elapsed > s->est_time){
+		mvwprintw(w->infowin, 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - s->est_time) / (60l * 60l)),
+			floor((elapsed - s->est_time)/60l), fmod(elapsed - s->est_time, 60l));
+		//if (clone)
+		//	pbars[i][5] = "CLONING!";
+	} else {
+		mvwprintw(w->infowin, 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((s->est_time - elapsed) / (60l * 60l)),
+			floor(fmod((s->est_time - elapsed)/60l, 60l)), fmod(s->est_time - elapsed, 60l));
+
+		if (((float)elapsed / (float)s->est_time) > ((s->progress + 1) / (cols/4 - 3))){
+			s->pbar[(int)s->progress+1] = '=';
+			s->progress ++;
+
+		}
+
+	}
+	wattron(w->infowin, COLOR_PAIR(4));	wattron(w->infowin, A_BOLD);
+	mvwprintw(w->infowin, 5,0, s->pbar);
+	wattroff(w->infowin, A_BOLD);	wattroff(w->infowin, COLOR_PAIR(4));
+
+	wrefresh(w->infowin);
+
+
+	wrefresh(w->infowin);
+
+
+	prefresh(s->padwin, s->pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, w->i * cols/4 + 1,
+					(rows - BORDER_DN  - 2), (w->i + 1) * cols/4 - 1);
+}
 
 
 WINDOW *create_newwin(int height, int width, int starty, int startx, bool border)
@@ -190,12 +257,6 @@ int main(int argc, char *argv[])
     mvprintw(rows - 1, 0, "Press CTRL^C to exit (not recommended).");
 
 
-    WINDOW *borderwin[pcount];
-	WINDOW *padwins[pcount];
-	WINDOW *infoborders[pcount];
-	WINDOW *infowins[pcount];
-	int *pad_scroll;
-	pad_scroll = malloc(pcount * sizeof(int));
 
     WipeWIN *wwin;
 
@@ -204,9 +265,7 @@ int main(int argc, char *argv[])
     int a = (pcount < NUM_WINDOWS) ? pcount : NUM_WINDOWS;
 
 	for(i = 0; i < a; i++){
-
-		padwins[i] = newpad(1000, cols/4 - 2);
-		scrollok(padwins[i], TRUE);
+		wwin[i].i = i;
 
 		wwin[i].borderwin = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT), cols/4,
 			BORDER_UP + INFO_HT, i * cols/4, true);
@@ -246,11 +305,15 @@ int main(int argc, char *argv[])
 	pbars = malloc(pcount * sizeof(char) * (cols/4 -1));
 	float *progress = malloc(pcount * sizeof(float));
 
+	int *pad_scroll;
+	WINDOW *padwins[pcount];
+	pad_scroll = malloc(pcount * sizeof(int));
+
 	int j;
 	for (j = 0; j < pcount; j++){
 
-		padwins[i] = newpad(1000, cols/4 - 2);
-		scrollok(padwins[i], TRUE);
+		padwins[j] = newpad(1000, cols/4 - 2);
+		scrollok(padwins[j], TRUE);
 				
 
 		est_time[j] = 0;
@@ -271,6 +334,15 @@ int main(int argc, char *argv[])
 	int ch, wsel,y,x;
 	wsel =0;
 	while(1){ 
+
+
+		time(&current);
+		double elapsed = difftime(current,start);
+		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
+			floor((elapsed)/60l), fmod(elapsed, 60l));
+		refresh();
+
+
 		ch = getch();
 		switch(ch)
 		{
@@ -349,11 +421,6 @@ int main(int argc, char *argv[])
 				break;
 		}
 
-		time(&current);
-		double elapsed = difftime(current,start);
-		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
-			floor((elapsed)/60l), fmod(elapsed, 60l));
-		refresh();
 
 		for (i = 0; i < pcount; i++){ // Loop through each subprocess.
 
@@ -373,11 +440,9 @@ int main(int argc, char *argv[])
 				}
 
 			}
-			wattron(wwin[i].infowin, COLOR_PAIR(4));
-			wattron(wwin[i].infowin, A_BOLD);
+			wattron(wwin[i].infowin, COLOR_PAIR(4));	wattron(wwin[i].infowin, A_BOLD);
 			mvwprintw(wwin[i].infowin, 5,0, pbars[i]);
-			wattroff(wwin[i].infowin, A_BOLD);
-			wattroff(wwin[i].infowin, COLOR_PAIR(4));
+			wattroff(wwin[i].infowin, A_BOLD);	wattroff(wwin[i].infowin, COLOR_PAIR(4));
 
 			wrefresh(wwin[i].infowin);
 
