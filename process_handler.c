@@ -14,7 +14,7 @@
 
 #define MAX_PROCESSES 10
 
-#define NUM_WINS 4
+#define MAX_WINS 4
 
 
 //Definitions for window structuring
@@ -90,7 +90,7 @@ void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
 			mvwprintw(w->infowin, 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((s->est_time - elapsed) / (60l * 60l)),
 				floor(fmod((s->est_time - elapsed)/60l, 60l)), fmod(s->est_time - elapsed, 60l));
 
-			if (((float)elapsed / (float)s->est_time) > ((s->progress + 1) / (cols/NUM_WINS - 3))){
+			if (((float)elapsed / (float)s->est_time) > ((s->progress + 1) / (cols/MAX_WINS - 3))){
 				s->pbar[(int)s->progress+1] = '=';
 				s->progress ++;
 
@@ -143,7 +143,7 @@ void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
 	wrefresh(w->infowin);
 
 	prefresh(s->padwin, s->pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, 
-		(w->i) * cols/NUM_WINS + 1, (rows - BORDER_DN  - 2), (w->i + 1) * cols/NUM_WINS - 1);
+		(w->i) * cols/MAX_WINS + 1, (rows - BORDER_DN  - 2), (w->i + 1) * cols/MAX_WINS - 1);
 
 
 }
@@ -274,26 +274,26 @@ int main(int argc, char *argv[])
 
     WipeWIN *wwin;
 
-    wwin = malloc(NUM_WINS * sizeof(WipeWIN));
 
-    int a = (pcount < NUM_WINS) ? pcount : NUM_WINS;
+    int num_wins = (pcount < MAX_WINS) ? pcount : MAX_WINS;
+    wwin = malloc(num_wins * sizeof(WipeWIN));
 
-	for(i = 0; i < a; i++){
+	for(i = 0; i < num_wins; i++){
 		wwin[i].i = i;
 
-		wwin[i].borderwin = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT), cols/NUM_WINS,
-			BORDER_UP + INFO_HT, i * cols/NUM_WINS, true);
+		wwin[i].borderwin = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT), cols/MAX_WINS,
+			BORDER_UP + INFO_HT, i * cols/MAX_WINS, true);
 
-		wwin[i].infoborder = create_newwin(INFO_HT, cols/NUM_WINS,
-			BORDER_UP, i * cols/NUM_WINS, true);
+		wwin[i].infoborder = create_newwin(INFO_HT, cols/MAX_WINS,
+			BORDER_UP, i * cols/MAX_WINS, true);
 		
 		wattron(wwin[i].infoborder, COLOR_PAIR(1));
 		box(wwin[i].infoborder, 0,0);
 		wattroff(wwin[i].infoborder, COLOR_PAIR(1));
 		wrefresh(wwin[i].infoborder); //remember to update colors.
 
-		wwin[i].infowin = create_newwin(INFO_HT -2 , cols/NUM_WINS - 2,
-			BORDER_UP + 1, i * cols/NUM_WINS + 1, false);
+		wwin[i].infowin = create_newwin(INFO_HT -2 , cols/MAX_WINS - 2,
+			BORDER_UP + 1, i * cols/MAX_WINS + 1, false);
 
 		mvwprintw(wwin[i].infowin, 0,0, "TARGET: /dev/%s\n", targets[i]);
 		wrefresh(wwin[i].infowin);
@@ -305,9 +305,9 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < pcount; i++){ // Initialize the wipe status structure.
 
-		wstat[i].pbar =  malloc(sizeof(char) * (cols/NUM_WINS -1));
+		wstat[i].pbar =  malloc(sizeof(char) * (cols/MAX_WINS -1));
 		strcpy(wstat[i].target, targets[i]);
-		wstat[i].padwin = newpad(1000, cols/NUM_WINS - 2);
+		wstat[i].padwin = newpad(1000, cols/MAX_WINS - 2);
 		scrollok(wstat[i].padwin, TRUE);
 		wstat[i].pad_scroll = 0;
 		wstat[i].est_time = 0;
@@ -315,10 +315,10 @@ int main(int argc, char *argv[])
 		wstat[i].progress = 0;
 		wstat[i].status = STATUS_RUNNING;
 		wstat[i].pbar[0] = '[';
-		wstat[i].pbar[cols/NUM_WINS -3] = ']';
-		wstat[i].pbar[cols/NUM_WINS - 2] = '\0';
+		wstat[i].pbar[cols/MAX_WINS -3] = ']';
+		wstat[i].pbar[cols/MAX_WINS - 2] = '\0';
 		int j;
-		for (j = 1; j < cols/NUM_WINS -3; j ++ )
+		for (j = 1; j < cols/MAX_WINS -3; j ++ )
 			wstat[i].pbar[j]=' ';
 	}
 
@@ -343,62 +343,35 @@ int main(int argc, char *argv[])
 		switch(ch) // Choose what to do based on the character input.
 		{
 			case KEY_LEFT:
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(6));
-				box(wwin[wsel].borderwin, 0,0);
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(6));
-				wrefresh(wwin[wsel].borderwin);
 
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
-
-				if (wsel > 0){
+				if (wsel > 0 && wsel > wshow){
 					wsel --;
-				} else {
+				} else if (wsel > 0 && wsel <= wshow){
+					wsel --;
+					wshow = wsel;
+				}else {
 					wsel += pcount -1;
+					wshow = pcount - num_wins;
 				}
-
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(5));
-				box(wwin[wsel].borderwin, 0,0);
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(5));
-				wrefresh(wwin[wsel].borderwin);
-
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
 
 				break;
 			
 			case KEY_RIGHT:
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(6));
-				box(wwin[wsel].borderwin, 0,0);
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(6));
-				wrefresh(wwin[wsel].borderwin);
 
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
-
-				if (wsel < pcount -1){
+				if (wsel < pcount -1 && wsel < wshow + num_wins - 1){
 					wsel ++;
+				} else if (wsel < pcount - 1 && wsel >= wshow + num_wins - 1){
+					wsel ++;
+					wshow ++;
 				} else {
 					wsel = 0;
+					wshow = 0;
 				}
-
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(5));
-				box(wwin[wsel].borderwin, 0,0);
-				wattron(wwin[wsel].borderwin, COLOR_PAIR(5));
-				wrefresh(wwin[wsel].borderwin);
-
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
-
-
 				break;
 
 			case KEY_UP:
 				if (wstat[wsel].pad_scroll > 0)
 					wstat[wsel].pad_scroll --;
-
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
 
 				break;
 
@@ -408,8 +381,6 @@ int main(int argc, char *argv[])
 				if(wstat[wsel].pad_scroll < y )
 					wstat[wsel].pad_scroll ++;
 
-				prefresh(wstat[wsel].padwin, wstat[wsel].pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, wsel * cols/NUM_WINS + 1,
-									(rows - BORDER_DN  - 2), (wsel+1) * cols/NUM_WINS - 1);
 
 				break;
 
@@ -419,94 +390,62 @@ int main(int argc, char *argv[])
 
 
 		for (i = 0; i < pcount; i++){ // Loop through each subprocess.
-			if (!(wstat[i].status == STATUS_RUNNING))
-				continue;
-
-			if (elapsed > wstat[i].est_time){ // Update timer.
-				mvwprintw(wwin[i].infowin, 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - wstat[i].est_time) / (60l * 60l)),
-					floor((elapsed - wstat[i].est_time)/60l), fmod(elapsed - wstat[i].est_time, 60l));
-				//if (clone)
-				//	wstat[i].pbar[5] = "CLONING!";
-			} else {
-				mvwprintw(wwin[i].infowin, 4,0, "T: -%02.lf:%02.lf:%02.lf      ", floor((wstat[i].est_time - elapsed) / (60l * 60l)),
-					floor(fmod((wstat[i].est_time - elapsed)/60l, 60l)), fmod(wstat[i].est_time - elapsed, 60l));
-
-				if (((float)elapsed / (float)wstat[i].est_time) > ((wstat[i].progress + 1) / (cols/NUM_WINS - 3))){
-					wstat[i].pbar[(int)wstat[i].progress+1] = '=';
-					wstat[i].progress ++;
-
-				}
-
-			}
-			wattron(wwin[i].infowin, COLOR_PAIR(4));	wattron(wwin[i].infowin, A_BOLD);
-			mvwprintw(wwin[i].infowin, 5,0, wstat[i].pbar);
-			wattroff(wwin[i].infowin, A_BOLD);	wattroff(wwin[i].infowin, COLOR_PAIR(4));
-
-			wrefresh(wwin[i].infowin);
-
-			// Process information passed through each pipe.
 
 			ssize_t count = read(filedes[i][0], buffer, sizeof(buffer));
 
-			if (count <= 0) continue;
-			strncpy(text, buffer, count);
-			char * line = text;
-			char * end = line + count;
-			while (line){  //Find all lines in buffer.
+			if (count > 0 && wstat[i].status == STATUS_RUNNING ){
+				strncpy(text, buffer, count);
+				char * line = text;
+				char * end = line + count;
+				while (line){  //Find all lines in buffer.
 
-				char * nextline = strchr(line, '\n'); // Find the next newline character.
-				if (nextline) *nextline = '\0'; // If it exists set it to endline.
+					char * nextline = strchr(line, '\n'); // Find the next newline character.
+					if (nextline) *nextline = '\0'; // If it exists set it to endline.
 
-				char test[3];
-				strncpy(test, line, 2);
-				test[2] = '\0';
-				// printw("%d",strcmp(test, SECURE_ERASE));
+					char test[3];
+					strncpy(test, line, 2);
+					test[2] = '\0';
+					// printw("%d",strcmp(test, SECURE_ERASE));
 
-				if (strcmp(test, SECURE_ERASE) == 0){
-					strcpy(wstat[i].status_se, &line[3]);
-					PRINT_SE(wwin[i].infowin, wstat[i].status_se);
-					wrefresh(wwin[i].infowin);
-				} else if (strcmp(test, ESTIMATED_TIME) == 0){
-					strcpy(wstat[i].status_et, &line[3]);
-					PRINT_ET(wwin[i].infowin, wstat[i].status_et);
-					wrefresh(wwin[i].infowin);
+					if (strcmp(test, SECURE_ERASE) == 0){
+						strcpy(wstat[i].status_se, &line[3]);
+					} else if (strcmp(test, ESTIMATED_TIME) == 0){
+						strcpy(wstat[i].status_et, &line[3]);
 
-					char temp[5];
-					int s = 0;
-					while((wstat[i].status_et[s] <= '9' && wstat[i].status_et[s] >= '0' )){
-						s++;		
-					}
+						char temp[5];
+						int s = 0;
+						while((wstat[i].status_et[s] <= '9' && wstat[i].status_et[s] >= '0' )){
+							s++;		
+						}
 
-					if (s > 0){	
-						strncpy(temp ,wstat[i].status_et, s);
-						temp[s] = '\0';
-						wstat[i].est_time = (long) atoi(temp) * 60;
+						if (s > 0){	
+							strncpy(temp ,wstat[i].status_et, s);
+							temp[s] = '\0';
+							wstat[i].est_time = (long) atoi(temp) * 60;
+						} else {
+							wstat[i].est_time = 0;
+						}
+
+					} else if (strcmp(test, SERIAL_NUMBER) == 0){
+						strcpy(wstat[i].status_sn, &line[3]);
+					} else if (strcmp(test, ERROR) == 0){
+						strcpy(wstat[i].status_er, &line[3]);
+						wstat[i].status = STATUS_ERROR;
+
+
 					} else {
-						wstat[i].est_time = 0;
+						wprintw(wstat[i].padwin, "%s\n", line);
+						getyx(wstat[i].padwin,y,x);
+						wstat[i].pad_scroll = y;
+
 					}
 
-				} else if (strcmp(test, SERIAL_NUMBER) == 0){
-					strcpy(wstat[i].status_sn, &line[3]);
-					PRINT_SN(wwin[i].infowin, wstat[i].status_sn);
-					wrefresh(wwin[i].infowin);
-				} else if (strcmp(test, ERROR) == 0){
-
-					wstat[i].status = STATUS_ERROR;
-
-					draw_proc(&wwin[i + wshow], &wstat[i], elapsed, (i == wsel) ?true:false); 
-
-				} else {
-					wprintw(wstat[i].padwin, "%s\n", line);
-					getyx(wstat[i].padwin,y,x);
-					wstat[i].pad_scroll = y;
-					prefresh(wstat[i].padwin, y - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, i * cols/NUM_WINS + 1,
-					(rows - BORDER_DN  - 2), (i+1) * cols/NUM_WINS - 1);
-
+					line = (nextline && nextline + 1 < end) ? (nextline + 1): NULL; // If there is a next line continue if not break.
+					
 				}
-
-				line = (nextline && nextline + 1 < end) ? (nextline + 1): NULL; // If there is a next line continue if not break.
-				
 			}
+			if (i >= wshow && i < wshow + num_wins)
+				draw_proc(&wwin[i - wshow], &wstat[i], elapsed, (i == wsel) ?true:false); 
 
 		}
 
@@ -530,7 +469,8 @@ int main(int argc, char *argv[])
 				if (!(wstat[i].status == STATUS_ERROR))
 					wstat[i].status = STATUS_DONE;
 
-				draw_proc(&(wwin[i]), &(wstat[i]), elapsed, (i == wsel) ?true:false); 
+				if (i >= wshow && i < wshow + num_wins)
+					draw_proc(&(wwin[i - wshow]), &(wstat[i]), elapsed, (i == wsel) ?true:false); 
 			}
 		}
 		if (fin) {
@@ -545,7 +485,8 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		usleep(25000);
+		usleep(50000);
+		// sleep(1);
 
 	}
 	endwin();
