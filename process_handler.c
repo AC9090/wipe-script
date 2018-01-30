@@ -243,7 +243,10 @@ int main(int argc, char *argv[])
 	char buffer[1024];
 	char text[256];
 
+	char *proc_status;
+
 	initscr();
+
 
 	if(has_colors() == FALSE)
 		{	endwin();
@@ -262,7 +265,7 @@ int main(int argc, char *argv[])
 	getmaxyx(stdscr, rows, cols);
 	timeout(0);
 	noecho();
-	cbreak(); //typed characers are not buffered
+	cbreak(); // Input characers are not shown on screen.
 	curs_set(0);
 	keypad(stdscr, TRUE);
 
@@ -304,7 +307,6 @@ int main(int argc, char *argv[])
 	wstat = malloc(pcount * sizeof(WipeStatus));
 
 	for (i = 0; i < pcount; i++){ // Initialize the wipe status structure.
-
 		wstat[i].pbar =  malloc(sizeof(char) * (cols/MAX_WINS -1));
 		strcpy(wstat[i].target, targets[i]);
 		wstat[i].padwin = newpad(1000, cols/MAX_WINS - 2);
@@ -336,6 +338,23 @@ int main(int argc, char *argv[])
 		double elapsed = difftime(current,start);
 		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
 			floor((elapsed)/60l), fmod(elapsed, 60l));
+
+		for(i = 0; i < pcount; i ++){
+			if (wstat[i].status == STATUS_RUNNING){
+				attron(COLOR_PAIR(1));
+				mvaddch(2,2*i, ACS_DIAMOND);
+				attroff(COLOR_PAIR(1));
+			} else if (wstat[i].status == STATUS_ERROR){
+				attron(COLOR_PAIR(2));
+				mvaddch(2,2*i, ACS_DIAMOND);
+				attroff(COLOR_PAIR(2));
+			} else if (wstat[i].status == STATUS_DONE){
+				attron(COLOR_PAIR(3));
+				mvaddch(2,2*i, ACS_DIAMOND);
+				attroff(COLOR_PAIR(3));
+			}
+		}
+
 		refresh();
 
 
