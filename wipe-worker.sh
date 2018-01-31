@@ -6,10 +6,11 @@ if [ "$EUID" -ne 0 ]
 fi
 
 MYLOGFILENAME="/var/log/wipe.log"
-DISKINFOFOLDER="/mnt/"
+DISKINFOFOLDER="/mnt/wipe"
 
 drive=$1
 source_drive=$2
+parent=$3
 
 disk_frozen=`hdparm -I /dev/$drive | grep frozen | grep -c not`
 disk_health=`smartctl -H /dev/$drive | grep -i "test result" | tail -c15 |awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
@@ -37,6 +38,7 @@ else
 fi
 
 # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
+echo "SN $disk_serial"
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   if [ $security_erase != 0 ]; then
     # Run hdparm erase
@@ -137,7 +139,7 @@ fi
 MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 
 # Cloning stage.
-if [ -z $source_drive ]; then
+if [ "$source_drive" == "NONE" ]; then
   echo
   echo "Wipe stage complete. No source drive selected."
   echo  
@@ -150,9 +152,14 @@ else
 
 fi
 
-hdparm -I /dev/$drive > $DISKINFOFOLDER/$disk_serial
+echo "disk_model=$disk_model
+disk_serial=$disk_serial
+disk_size=$disk_size
+security_erase=$security_erase
+enhanced_erase=$enhanced_erase
+source_drive=$source_drive
+parent=$parent" > $DISKINFOFOLDER/$disk_serial
 
-#whiptail --title "$brand" --infobox "Operations Complete on /dev/$drive" 20 78
 echo "Operations complete. Exiting..."
 sleep 6
 exit

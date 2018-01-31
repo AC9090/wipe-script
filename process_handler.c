@@ -178,24 +178,28 @@ int main(int argc, char *argv[])
 
 
 	char* targets[MAX_PROCESSES];
-	char* clone;
+	char* clone = NULL;
+	char* parent = NULL;
 
 	int pcount = 0;
-
-	int i = 1;
+	printf("argc %d, argv %s", argc, argv[1]);
 	if (argc < 2){
-		printf("Please give arguments in the following format:\n {-clone drive} [drives]\n");
+		printf("Please give arguments in the following format:\n {-c clone_drive} {-p parent_computer} [drives]\n");
 		exit(1);
 	}
-	if ((argv[1][0] == '-')){ //this indicates a clone
-		clone = &argv[1][1];
-		i++;
-	}
+	int i = 1;
 	for (i; i < argc; i ++){
-		targets[pcount] = argv[i];
-		pcount ++;
+		if ((argv[i][0] == '-') && (argv[i][1] == 'c')){ //this indicates a clone
+			i++;
+			clone = &argv[i][0];
+		} else if ((argv[i][0] == '-') && (argv[i][1] == 'p')){
+			i++;
+			parent = &argv[i][0];
+		}else {
+			targets[pcount] = argv[i];
+			pcount ++;
+		}
 	}
-
 	//Now we have the arguments, create a pipe for each process.
 
 
@@ -223,10 +227,14 @@ int main(int argc, char *argv[])
 				execl("./pipe_test.sh", "./pipe_test.sh", (char*) NULL);
 			}
 #else
-			if (!clone){
-				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], (char*)0);
+			if ((!clone) && (!parent)){
+				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], "NONE", "NONE",(char*)0);
+			} else if (!parent){
+				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], clone, "NONE", (char*)0);
+			} else if (!clone){
+				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], "NONE", parent,(char*)0);
 			} else {
-				execl("./wipe-worker.sh", "./wipe-worker.sh", targets[i], clone, (char*)0);
+				printf("something went wrong....\n");
 			}
 #endif			
 			perror("execl");
@@ -246,7 +254,6 @@ int main(int argc, char *argv[])
 	char *proc_status;
 
 	initscr();
-
 
 	if(has_colors() == FALSE)
 		{	endwin();
@@ -332,6 +339,7 @@ int main(int argc, char *argv[])
 	int ch,y,x;
 	int wsel =0; // The currently selected / highlighted window.
 	int wshow = 0; // The first window shown on screen.
+	bool fin = false; // All processes are finished.
 	while(1){
 
 		time(&current);
@@ -361,6 +369,15 @@ int main(int argc, char *argv[])
 		ch = getch(); // Get the next character from the input buffer.
 		switch(ch) // Choose what to do based on the character input.
 		{
+
+			case KEY_HOME:
+				if (fin) {
+					
+					sleep(1);
+					goto finish;
+				}
+				break;
+
 			case KEY_LEFT:
 
 				if (wsel > 0 && wsel > wshow){
@@ -468,7 +485,7 @@ int main(int argc, char *argv[])
 
 		}
 
-		bool fin = true; // Check if all child processes are finished.
+		fin = true; // Check if all child processes are finished.
 		for (i=0; i < pcount; i ++){
 			if (wstat[i].status == STATUS_DONE)
 				continue;
@@ -492,22 +509,18 @@ int main(int argc, char *argv[])
 					draw_proc(&(wwin[i - wshow]), &(wstat[i]), elapsed, (i == wsel) ?true:false); 
 			}
 		}
-		if (fin) {
-			
+		if (fin){
 			attron(COLOR_PAIR(3));
-			mvprintw(rows - 1, 0, "All processes are complete! Press any key to continue...");
+			mvprintw(rows - 1, 0, "All processes are complete! Press HOME to continue...");
 			attroff(COLOR_PAIR(3));
 			refresh();
-			fseek(stdin,0,SEEK_END); // Empty stdin.
-			sleep(1);
-			getchar();
-			break;
 		}
 
 		usleep(50000);
 		// sleep(1);
 
 	}
+	finish:
 	endwin();
 	printf("Exiting process_handler.\n\n");
 	sleep(2);

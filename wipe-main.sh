@@ -91,6 +91,14 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
       exit
     fi
   fi
+  
+  mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
+
+  has_parent=false
+  if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
+    has_parent=true
+    parent=$(whiptail --inputbox "Please enter the asset number:" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+  fi
 
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
@@ -104,7 +112,6 @@ ${drives_selected[@]} " 20 78); then
   fi
 
 # Mount the nfs folder where drive information is stored.
-  #mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
 
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
   drives_selected2=""
@@ -119,8 +126,13 @@ ${drives_selected[@]} " 20 78); then
 
 
   # Start the process handler
-  if [ will_clone ] ; then
-    ./process-handler -$source_drive $drives_selected2
+  if $will_clone  &&  $has_parent ; then
+    echo $drives_selected2
+    ./process-handler -c $source_drive -p $parent $drives_selected2
+  elif  $will_clone  ; then
+    ./process-handler -c $source_drive $drives_selected2
+  elif  $has_parent ; then 
+    ./process-handler -p $parent $drives_selected2
   else 
     ./process-handler $drives_selected2
   fi
