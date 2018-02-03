@@ -1,7 +1,6 @@
 #!/bin/bash
 
 MYSERVERIP="192.168.0.1"
-MYMOUNTPOINT="/mnt"
 # Exit if not run as root (sudo)
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -97,7 +96,21 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
   has_parent=false
   if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
     has_parent=true
+
     parent=$(whiptail --inputbox "Please enter the asset number:" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+    computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
+    echo "Collecting device information..."
+    computer_model=`lshw -short | grep system | awk '{for (i=2; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
+    computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
+
+    ./sql-handler -c "$parent" "$computer_service_tag" "$computer_model" "$computer_processor"
+
+    exitstatus=$?
+    if [[ ( $exitstatus != 0 ) ]]; then
+      echo
+      echo "Could not update sql database. Shutting down..."
+      exit
+    fi
   fi
 
   # Wipe confirmation
@@ -111,7 +124,6 @@ ${drives_selected[@]} " 20 78); then
     exit
   fi
 
-# Mount the nfs folder where drive information is stored.
 
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
   drives_selected2=""
@@ -137,9 +149,6 @@ ${drives_selected[@]} " 20 78); then
     ./process-handler $drives_selected2
   fi
   
-
-  # Unmount the no longer needed nfs filesystem.
-  umount $MYMOUNTPOINT
 
   echo "All subprocesses are complete."
   

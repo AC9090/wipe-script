@@ -6,7 +6,6 @@ if [ "$EUID" -ne 0 ]
 fi
 
 MYLOGFILENAME="/var/log/wipe.log"
-DISKINFOFOLDER="/mnt/wipe"
 
 drive=$1
 source_drive=$2
@@ -152,13 +151,16 @@ else
 
 fi
 
-echo "disk_model=$disk_model
-disk_serial=$disk_serial
-disk_size=$disk_size
-security_erase=$security_erase
-enhanced_erase=$enhanced_erase
-source_drive=$source_drive
-parent=$parent" > $DISKINFOFOLDER/$disk_serial
+./sql-handler -d "$disk_model" "$disk_serial" "$disk_size" "$security_erase" "$enhanced_erase" "$source_drive" "$parent"
+
+exitstatus=$?
+if [[ ( $exitstatus != 0 ) ]]; then
+  echo
+  echo "Could not update sql database. Shutting down..."
+  exit
+else 
+  echo "Database updated."
+fi
 
 echo "Operations complete. Exiting..."
 sleep 6

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <mysql.h>
 
 #define MAX_PROCESSES 10
 
