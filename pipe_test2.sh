@@ -1,13 +1,13 @@
 #! /bin/bash
 
 echo "SE Enabled 
-ET 10min"
+ET 1min"
 
 echo "SN HD10001"
 
 for i in $(seq 1 20); do
 	echo "LINE NUMBER $i"
-	sleep 30
+	sleep 3
 done
 
 # echo "ER PANIC!!"

@@ -42,6 +42,10 @@
 #define STATUS_DONE 1
 #define STATUS_ERROR 2
 
+#define REFRESH_SELECTED 0b001
+#define REFRESH_PAD 0b010
+#define REFRESH_INFO_BORDER 0b100
+
 typedef struct WipeStatus WipeStatus;
 
 struct WipeStatus {
@@ -72,9 +76,9 @@ struct WipeWIN {
 
 
 int rows, cols;
+long elapsed;
 
-
-void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
+void draw_proc(WipeWIN *w, WipeStatus *s, bool selected, int refresh_flag)
 {
 	if (s->status == STATUS_RUNNING){
 		wattron(w->infoborder, COLOR_PAIR(1));
@@ -118,7 +122,8 @@ void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
 	} else {
 		//Problem.
 	}
-	wrefresh(w->infoborder);
+	if (refresh_flag & REFRESH_INFO_BORDER)
+		wrefresh(w->infoborder);
 
 	if (selected){
 		wattron(w->borderwin, COLOR_PAIR(5));
@@ -130,7 +135,8 @@ void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
 		wattron(w->borderwin, COLOR_PAIR(6));
 	}
 
-	wrefresh(w->borderwin);
+	if (refresh_flag & REFRESH_SELECTED)
+		wrefresh(w->borderwin);
 
 	PRINT_TARGET(w->infowin, s->target);
 	PRINT_SE(w->infowin, s->status_se);
@@ -143,8 +149,9 @@ void draw_proc(WipeWIN *w, WipeStatus *s, long elapsed, bool selected)
 
 	wrefresh(w->infowin);
 
-	prefresh(s->padwin, s->pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, 
-		(w->i) * cols/MAX_WINS + 1, (rows - BORDER_DN  - 2), (w->i + 1) * cols/MAX_WINS - 1);
+	if (refresh_flag & (REFRESH_PAD | REFRESH_SELECTED) )
+		prefresh(s->padwin, s->pad_scroll - (rows - BORDER_UP - BORDER_DN - INFO_HT - 2), 0,  BORDER_UP + INFO_HT + 1, 
+			(w->i) * cols/MAX_WINS + 1, (rows - BORDER_DN  - 2), (w->i + 1) * cols/MAX_WINS - 1);
 
 
 }
@@ -341,10 +348,12 @@ int main(int argc, char *argv[])
 	int wsel =0; // The currently selected / highlighted window.
 	int wshow = 0; // The first window shown on screen.
 	bool fin = false; // All processes are finished.
+	int r_flag = 0; // Which parts of the screen need refreshed to reduce flickering.
 	while(1){
+		r_flag = 0;
 
 		time(&current);
-		double elapsed = difftime(current,start);
+		elapsed = difftime(current,start);
 		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
 			floor((elapsed)/60l), fmod(elapsed, 60l));
 
@@ -390,6 +399,7 @@ int main(int argc, char *argv[])
 					wsel += pcount -1;
 					wshow = pcount - num_wins;
 				}
+				r_flag |= REFRESH_SELECTED;
 
 				break;
 			
@@ -404,12 +414,17 @@ int main(int argc, char *argv[])
 					wsel = 0;
 					wshow = 0;
 				}
+
+				r_flag |= REFRESH_SELECTED;
+
+
 				break;
 
 			case KEY_UP:
 				if (wstat[wsel].pad_scroll > 0)
 					wstat[wsel].pad_scroll --;
 
+				r_flag |= REFRESH_PAD;
 				break;
 
 			case KEY_DOWN:
@@ -418,7 +433,7 @@ int main(int argc, char *argv[])
 				if(wstat[wsel].pad_scroll < y )
 					wstat[wsel].pad_scroll ++;
 
-
+				r_flag |= REFRESH_PAD;
 				break;
 
 			default:
@@ -469,11 +484,15 @@ int main(int argc, char *argv[])
 						strcpy(wstat[i].status_er, &line[3]);
 						wstat[i].status = STATUS_ERROR;
 
+						r_flag |= REFRESH_INFO_BORDER;
+
 
 					} else {
 						wprintw(wstat[i].padwin, "%s\n", line);
 						getyx(wstat[i].padwin,y,x);
 						wstat[i].pad_scroll = y;
+
+						r_flag |= REFRESH_PAD;
 
 					}
 
@@ -482,7 +501,8 @@ int main(int argc, char *argv[])
 				}
 			}
 			if (i >= wshow && i < wshow + num_wins)
-				draw_proc(&wwin[i - wshow], &wstat[i], elapsed, (i == wsel) ?true:false); 
+				draw_proc(&wwin[i - wshow], &wstat[i], elapsed, (i == wsel) ?true:false, r_flag);
+
 
 		}
 
@@ -507,7 +527,7 @@ int main(int argc, char *argv[])
 					wstat[i].status = STATUS_DONE;
 
 				if (i >= wshow && i < wshow + num_wins)
-					draw_proc(&(wwin[i - wshow]), &(wstat[i]), elapsed, (i == wsel) ?true:false); 
+					draw_proc(&(wwin[i - wshow]), &(wstat[i]), elapsed, (i == wsel) ?true:false, 0b111); 
 			}
 		}
 		if (fin){
@@ -517,7 +537,7 @@ int main(int argc, char *argv[])
 			refresh();
 		}
 
-		usleep(50000);
+		usleep(25000);
 		// sleep(1);
 
 	}

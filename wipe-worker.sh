@@ -60,7 +60,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     else
       echo -e "\e[31mFailed to set password!\e[0m"
       echo
-      read -p "Press any key to continue." -n1 -s
+      
     fi
     echo
     MYTIMEVAR=`date +'%k:%M:%S'`

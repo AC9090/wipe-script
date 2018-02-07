@@ -112,7 +112,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
       exit
     fi
   fi
-
+  
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
 ${drives_selected[@]} " 20 78); then
