@@ -91,7 +91,6 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     fi
   fi
   
-  mount -t nfs -o proto=tcp,port=2049 $MYSERVERIP:/ $MYMOUNTPOINT
 
   has_parent=false
   if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
@@ -112,7 +111,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
       exit
     fi
   fi
-  
+
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
 ${drives_selected[@]} " 20 78); then

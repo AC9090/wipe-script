@@ -344,11 +344,11 @@ int main(int argc, char *argv[])
 
 	time(&start);
 
-	int ch,y,x;
+	int ch,y,x;  // The character to be taken for input and the x and y coordinates of the cursor.
 	int wsel =0; // The currently selected / highlighted window.
 	int wshow = 0; // The first window shown on screen.
 	bool fin = false; // All processes are finished.
-	int r_flag = 0; // Which parts of the screen need refreshed to reduce flickering.
+	int r_flag; // Which parts of the screen need refreshed to reduce flickering.
 	while(1){
 		r_flag = 0;
 
@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
 
 			ssize_t count = read(filedes[i][0], buffer, sizeof(buffer));
 
-			if (count > 0 && wstat[i].status == STATUS_RUNNING ){
+			if (count > 0 && wstat[i].status == STATUS_RUNNING ){  // If the pipe buffer has data and the process is running.
 				strncpy(text, buffer, count);
 				char * line = text;
 				char * end = line + count;
@@ -455,9 +455,8 @@ int main(int argc, char *argv[])
 					if (nextline) *nextline = '\0'; // If it exists set it to endline.
 
 					char test[3];
-					strncpy(test, line, 2);
+					strncpy(test, line, 2); // Special inputs are tagged by the first two characters.
 					test[2] = '\0';
-					// printw("%d",strcmp(test, SECURE_ERASE));
 
 					if (strcmp(test, SECURE_ERASE) == 0){
 						strcpy(wstat[i].status_se, &line[3]);
