@@ -102,7 +102,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     computer_model=`lshw -short | grep system | awk '{for (i=2; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
     computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
 
-    ./sql-handler -c "$parent" "$computer_service_tag" "$computer_model" "$computer_processor"
+    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
 
     exitstatus=$?
     if [[ ( $exitstatus != 0 ) ]]; then

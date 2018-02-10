@@ -90,11 +90,11 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     fi
     if [ $? -eq 0 ]; then
       echo
-      echo -e "\e[32mDisk erased successfully.\e[0m" && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      echo -e "Disk erased successfully." && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
     else
       echo
-      echo -e "\e[31mErase failed. Replace hard drive.\e[0m" && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
+      echo -e "Erase failed. Replace hard drive." && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
       exit
     fi
@@ -103,7 +103,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     # Run nwipe
     #
     echo "Disabled"
-    echo -e "\e[33mDevice /dev/$drive does not support security erase. Falling back to nwipe...\e[0m"
+    echo -e "Device /dev/$drive does not support security erase. Falling back to nwipe..."
     echo "ET Unknown"
     echo
     sleep 3s
@@ -129,7 +129,7 @@ fi
 # If SMART is supported and drive is unhealthy, print message to replace drive
 #
 if [ $smart_check != 0 ] && [ $disk_health != PASSED ]; then
-  echo -e "\e[31mSMART check of /dev/$drive failed. Replace hard drive.\e[0m"
+  echo -e "SMART check of /dev/$drive failed. Replace hard drive."
   echo  "ER SMART check failed."
   read -p "Press any key to continue." -n1 -s
   exit
@@ -151,7 +151,8 @@ else
 
 fi
 
-./sql-handler -d "$disk_model" "$disk_serial" "$disk_size" "$security_erase" "$enhanced_erase" "$source_drive" "$parent"
+./sql-handler -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
+source_drive="$source_drive" parent="$parent"
 
 exitstatus=$?
 if [[ ( $exitstatus != 0 ) ]]; then
