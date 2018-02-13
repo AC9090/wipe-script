@@ -56,6 +56,19 @@ void expand_escapes(char* dest, const char* src)  //Tyler McHenry on stack excha
 }
 
 
+// Set key vaule pair from source that is of format key=value.
+void set_kvp(char* key, char* value, char* src)
+{
+	char * temp = malloc(sizeof(char) * 128);
+	strcpy(temp, src);
+	char * token = strtok(temp, "=");
+	strcpy(key, token);
+	token = strtok(NULL, "=");
+	strcat(value, "\"");
+	strcat(value, token);
+	strcat(value, "\"");
+
+}
 
 // These are the possible arguments for this program.
 // For a disk: "disk_model" "disk_serial" "disk_size" "security_erase" "enhanced_erase" "source_drive" "parent" "wiped"
@@ -85,7 +98,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (!mysql_real_connect(&mysql,"192.168.0.1","wipe","wipepw","wipedb",0,NULL,0))
+	if (!mysql_real_connect(&mysql,"127.0.0.1","wipe","wipepw","wipedb",0,NULL,0))
 	{ 
 
 	    printf( "Failed to connect to MySQL: Error: %s\n", mysql_error(&mysql)); 
@@ -110,121 +123,142 @@ int main(int argc, char *argv[])
 	   		exit(1);
 	   	}
 
+
+
+	    int i;
+   		char ** values = malloc(sizeof(char * ) * (argc-3)); 
+   		char ** keys = malloc(sizeof(char * ) * (argc-3));
+   		for (i = 0; i < argc - 3; i ++){
+   			values[i] = malloc(sizeof(char) * 64);
+   			values[i][0] = '\0';
+   			keys[i] = malloc(sizeof(char) * 64);
+   			keys[i][0] = '\0';
+   			
+   		}
+
 	   	if (argv[2][0] == '-' && argv[2][1] == 'd'){
 	   		printf ("Database 'disk' selected.\n");
 
-			int i;
-	   		char * values = malloc(sizeof(char) * 512);
-	   		char * keys = malloc(sizeof(char) * 512);
-	   		char * disk_serial = malloc(sizeof(char) * 64);
-	   		values[0] = '\0';
-	   		keys[0] = '\0';
+	   		char * disk_serial = malloc(sizeof(char) * 128);
 
 	   		char * temp = malloc(sizeof(char) * 128);
-	   		for (i = 3; i < argc; i ++) {
-	   			expand_escapes(temp, argv[i]);
+	   		for (i = 0; i < argc - 3; i ++) {
+	   			expand_escapes(temp, argv[i + 3]);
+
+	   			// Having each field in a separate conditional allows for easier
+	   			// manipulation of different types of fields.
 
 	   			if(!strncmp("disk_model", temp, strlen("disk_model"))){
-	   				strcat(keys, "disk_model");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("disk_serial", temp, strlen("disk_serial"))){
-	   				strcat(keys, "disk_serial");
-	   				// char * token = strtok(temp, "=");
-	   				// token = strtok(NULL, "=");
-	   				//strcpy(disk_serial, token);
+	   				set_kvp(keys[i], values[i], temp);
+   					char * token = strtok(temp, "=");
+					token = strtok(NULL, "=");
+					strcpy(disk_serial, token);
 	   			} else if (!strncmp("disk_size", temp, strlen("disk_size"))){
-	   				strcat(keys, "disk_size");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("security_erase", temp, strlen("security_erase"))){
-	   				strcat(keys, "security_erase");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("enhanced_erase", temp, strlen("enhanced_erase"))){
-	   				strcat(keys, "enhanced_erase");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("source_drive", temp, strlen("source_drive"))){
-	   				strcat(keys, "source_drive");
-	   			} else if (!strncmp("parent", temp, strlen("parent"))){
-	   				strcat(keys, "parent");
+	   				set_kvp(keys[i], values[i], temp);
+				} else if (!strncmp("parent", temp, strlen("parent"))){
+	   				set_kvp(keys[i], values[i], temp);
    				} else if (!strncmp("wiped", temp, strlen("wiped"))){
-   					strcat(keys, "wiped");
+   					set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				printf("Error, argument not supported: %s\n", temp);
 	   				PRINTARGS
 	   				exit(1);
 	   			}
 
-	   			char * token = strtok(temp, "=");
-	   			token = strtok(NULL, "=");
-	   			strcat(values, "\"");
-   				strcat(values, token);
-	   			strcat(values, "\"");
 
-   				if (i != argc - 1){
-   					strcat(values, ", ");
-   					strcat(keys, ", ");
-   				}
+	   		}	
+
+	   		char * values_str = malloc(sizeof(char) * 512);
+	   		char * keys_str = malloc(sizeof(char) * 512);
+	   		values_str[0] = '\0';
+	   		keys_str[0] = '\0';
+	   		for (i = 0; i < argc - 3; i++){
+				strcat(values_str, values[i]);
+				strcat(keys_str, keys[i]);
+				if (i != argc - 4){
+					strcat(values_str, ", ");
+					strcat(keys_str, ", ");
+				}
 	   				
 	   		}
-	  //  		sprintf(query,"SELECT * FROM disk WHERE disk_serial=\"%s\");",
-		 //    		disk_serial);
-
+	   		sprintf(query,"SELECT * FROM disk WHERE disk_serial=\"%s\";",
+		    		disk_serial);
 	   		
-	  //  		if (mysql_query(&mysql, query))
-			// {
-			//     finish_with_error(&mysql);
-			// }
+	   		if (mysql_query(&mysql, query))
+			{
+			    finish_with_error(&mysql);
+			}
 			  
-			// MYSQL_RES *result = mysql_store_result(&mysql);
-			  
-			// if (result == NULL) 
-			// {
-			//     finish_with_error(&mysql);
-			// }
+			MYSQL_RES *result = mysql_store_result(&mysql);
+						  
+			if (result == NULL) 
+			{
+			    finish_with_error(&mysql);
+			}
+			unsigned int res_count = mysql_field_count(&mysql);
 
+			if (res_count == 0)
+			{
+				printf("res_count = 0\n");
+			} else if (res_count == 1)
+			{
+				printf("res_count = 1\n");
+			} else {
+				printf("%d\n", res_count);
+			}
 
 		    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
-		    		keys, values);
+		    		keys_str, values_str);
 
-
+		    printf("%s\n", query);
+		    printf("%s\n",disk_serial);
 	    	if (mysql_query(&mysql, query))
      	 		finish_with_error(&mysql);
 			
 		} else if (argv[2][0] == '-' && argv[2][1] == 'c') {
 	    	printf( "Database 'computer' Selected\n");
 
-		    int i;
-	   		char * values = malloc(sizeof(char) * 512);
-	   		char * keys = malloc(sizeof(char) * 512);
-	   		values[0] = '\0';
-	   		keys[0] = '\0';
-
 	   		char * temp = malloc(sizeof(char) * 128);
 	   		for (i = 3; i < argc; i ++) {
 	   			expand_escapes(temp, argv[i]);
 
 	   			if(!strncmp("asset_no", temp, strlen("asset_no"))){
-	   				strcat(keys, "asset_no");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("service_tag", temp, strlen("service_tag"))){
-	   				strcat(keys, "service_tag");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("model", temp, strlen("model"))){
-	   				strcat(keys, "model");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("processor", temp, strlen("processor"))){
-	   				strcat(keys, "processor");
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				PRINTARGS
 	   				printf("%s\n", temp);
 	   				exit(1);
 	   			}
-	   			char * token = strtok(temp, "=");
-	   			token = strtok(NULL, "=");
-	   			strcat(values, "\"");
-   				strcat(values, token);
-	   			strcat(values, "\"");
-
-   				if (i != argc - 1){
-   					strcat(values, ", ");
-   					strcat(keys, ", ");
-   				}
 	   				
 	   		}
+	   		char * values_str = malloc(sizeof(char) * 512);
+	   		char * keys_str = malloc(sizeof(char) * 512);
+	   		values_str[0] = '\0';
+	   		keys_str[0] = '\0';
+	   		for (i = 0; i < argc - 3; i++){
+				strcat(keys_str, keys[i]);
+				strcat(values_str, values[i]);
+				if (i != argc - 4){
+					strcat(values_str, ", ");
+					strcat(keys_str, ", ");
+				}
+			}
 		    sprintf(query,"INSERT INTO computer (%s) VALUES(%s);",
-		    		keys, values);
+		    		keys_str, values_str);
 
 		    printf("%s\n", query);
 		    	if (mysql_query(&mysql, query))

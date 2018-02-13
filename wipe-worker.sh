@@ -142,6 +142,8 @@ if [ "$source_drive" == "NONE" ]; then
   echo
   echo "Wipe stage complete. No source drive selected."
   echo  
+  source_drive_serial="NONE"
+
 else
   echo "Cloning from source $source_drive to $drive"
 
@@ -149,10 +151,13 @@ else
 
   echo "Cloning from source to /dev/$drive complete."
 
+  source_drive_serial=`hdparm -I /dev/$source_drive | grep "Serial Number" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+
+
 fi
 
 ./sql-handler -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
-source_drive="$source_drive" parent="$parent"
+source_drive="$source_drive_serial" parent="$parent"
 
 exitstatus=$?
 if [[ ( $exitstatus != 0 ) ]]; then
