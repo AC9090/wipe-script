@@ -166,7 +166,9 @@ int main(int argc, char *argv[])
 				} else if (!strncmp("parent", temp, strlen("parent"))){
 	   				set_kvp(keys[i], values[i], temp);
    				} else if (!strncmp("wiped", temp, strlen("wiped"))){
-   					set_kvp(keys[i], values[i], temp);
+   					// set_kvp(keys[i], values[i], temp);
+   					keys[i] = "wiped";
+   					values[i] = "CURRENT_TIMESTAMP";
 	   			} else {
 	   				printf("Error, argument not supported: %s\n", temp);
 	   				PRINTARGS
@@ -189,39 +191,56 @@ int main(int argc, char *argv[])
 				}
 	   				
 	   		}
-	   		sprintf(query,"SELECT * FROM disk WHERE disk_serial=\"%s\";",
+
+	   		// Before deciding whether to insert or update we must check if the entry exists already.
+	   		sprintf(query,"SELECT * FROM disk WHERE disk_serial=\"%s\" AND wiped='0';",
 		    		disk_serial);
 	   		
 	   		if (mysql_query(&mysql, query))
-			{
 			    finish_with_error(&mysql);
-			}
 			  
 			MYSQL_RES *result = mysql_store_result(&mysql);
 						  
-			if (result == NULL) 
-			{
+			if (result == NULL)
 			    finish_with_error(&mysql);
-			}
-			unsigned int res_count = mysql_field_count(&mysql);
 
-			if (res_count == 0)
-			{
-				printf("res_count = 0\n");
-			} else if (res_count == 1)
-			{
-				printf("res_count = 1\n");
+			unsigned int res_count = mysql_num_rows(result);
+
+			if (res_count == 0) {
+
+			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
+			    		keys_str, values_str);
+
+		    	if (mysql_query(&mysql, query))
+	     	 		finish_with_error(&mysql);
+
+			} else if (res_count == 1) {
+
+				sprintf(query, "UPDATE disk SET ");
+
+				for (i = 0; i < argc - 4; i++) {
+					strcat(query, keys[i]);
+					strcat(query, " = ");
+					strcat(query, values[i]);
+					strcat(query, ", ");
+				}
+
+				strcat(query, keys[i]);
+				strcat(query, " = ");
+				strcat(query, values[i]);
+
+				sprintf(temp, " WHERE disk_serial = \"%s\" AND wiped = 0 ;", disk_serial);
+				strcat(query, temp);
+
+				if (mysql_query(&mysql, query))
+	     	 		finish_with_error(&mysql);
+
 			} else {
 				printf("%d\n", res_count);
 			}
 
-		    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
-		    		keys_str, values_str);
-
 		    printf("%s\n", query);
 		    printf("%s\n",disk_serial);
-	    	if (mysql_query(&mysql, query))
-     	 		finish_with_error(&mysql);
 			
 		} else if (argv[2][0] == '-' && argv[2][1] == 'c') {
 	    	printf( "Database 'computer' Selected\n");
@@ -272,7 +291,7 @@ int main(int argc, char *argv[])
 	}else
     	printf( "Failed to connect to Database: Error: %s\n", mysql_error(&mysql));
 
-	printf("Done\n");
+	printf("Sql handler done.\n");
 	mysql_close(&mysql);
 
 	exit(0);
