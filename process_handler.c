@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
     int num_wins = (pcount < MAX_WINS) ? pcount : MAX_WINS;
     wwin = malloc(num_wins * sizeof(WipeWIN));
 
-	for(i = 0; i < num_wins; i++){
+	for(i = 0; i < num_wins; i++){ // Initialize the wipe window structures.
 		wwin[i].i = i;
 
 		wwin[i].borderwin = create_newwin((rows - BORDER_UP - BORDER_DN - INFO_HT), cols/MAX_WINS,
@@ -357,6 +357,7 @@ int main(int argc, char *argv[])
 		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
 			floor((elapsed)/60l), fmod(elapsed, 60l));
 
+		// Print a diamond with a color corresponding to the status of the subprocess.
 		for(i = 0; i < pcount; i ++){
 			if (wstat[i].status == STATUS_RUNNING){
 				attron(COLOR_PAIR(1));
@@ -380,7 +381,7 @@ int main(int argc, char *argv[])
 		switch(ch) // Choose what to do based on the character input.
 		{
 
-			case KEY_HOME:
+			case KEY_HOME: // If all subprocesses are finished, press home to continue.
 				if (fin) {
 					
 					sleep(1);
@@ -388,7 +389,7 @@ int main(int argc, char *argv[])
 				}
 				break;
 
-			case KEY_LEFT:
+			case KEY_LEFT: // Move one window to the left.
 
 				if (wsel > 0 && wsel > wshow){
 					wsel --;
@@ -403,7 +404,7 @@ int main(int argc, char *argv[])
 
 				break;
 			
-			case KEY_RIGHT:
+			case KEY_RIGHT: // Move one window to the right.
 
 				if (wsel < pcount -1 && wsel < wshow + num_wins - 1){
 					wsel ++;
@@ -420,7 +421,7 @@ int main(int argc, char *argv[])
 
 				break;
 
-			case KEY_UP:
+			case KEY_UP:  // Scroll up within the pad of the selected window.
 				if (wstat[wsel].pad_scroll > 0)
 					wstat[wsel].pad_scroll --;
 
@@ -458,6 +459,7 @@ int main(int argc, char *argv[])
 					strncpy(test, line, 2); // Special inputs are tagged by the first two characters.
 					test[2] = '\0';
 
+					// Test for all the special characters.
 					if (strcmp(test, SECURE_ERASE) == 0){
 						strcpy(wstat[i].status_se, &line[3]);
 					} else if (strcmp(test, ESTIMATED_TIME) == 0){
@@ -525,6 +527,7 @@ int main(int argc, char *argv[])
 				if (!(wstat[i].status == STATUS_ERROR))
 					wstat[i].status = STATUS_DONE;
 
+				// Update the info window one final time.
 				if (i >= wshow && i < wshow + num_wins)
 					draw_proc(&(wwin[i - wshow]), &(wstat[i]), (i == wsel) ?true:false, 0b111); 
 			}

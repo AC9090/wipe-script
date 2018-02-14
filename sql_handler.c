@@ -57,7 +57,7 @@ void expand_escapes(char* dest, const char* src)  //Tyler McHenry on stack excha
 
 
 // Set key vaule pair from source that is of format key=value.
-void set_kvp(char* key, char* value, char* src)
+void set_kvp(char* key, char* value, const char* src)
 {
 	char * temp = malloc(sizeof(char) * 128);
 	strcpy(temp, src);
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 	   	if (argv[2][0] == '-' && argv[2][1] == 'd'){
 	   		printf ("Database 'disk' selected.\n");
 
-	   		char * disk_serial = malloc(sizeof(char) * 128);
+	   		char * disk_serial = malloc(sizeof(char) * 128); // Keep track of the primary key for use later.
 
 	   		char * temp = malloc(sizeof(char) * 128);
 	   		for (i = 0; i < argc - 3; i ++) {
@@ -178,20 +178,6 @@ int main(int argc, char *argv[])
 
 	   		}	
 
-	   		char * values_str = malloc(sizeof(char) * 512);
-	   		char * keys_str = malloc(sizeof(char) * 512);
-	   		values_str[0] = '\0';
-	   		keys_str[0] = '\0';
-	   		for (i = 0; i < argc - 3; i++){
-				strcat(values_str, values[i]);
-				strcat(keys_str, keys[i]);
-				if (i != argc - 4){
-					strcat(values_str, ", ");
-					strcat(keys_str, ", ");
-				}
-	   				
-	   		}
-
 	   		// Before deciding whether to insert or update we must check if the entry exists already.
 	   		sprintf(query,"SELECT * FROM disk WHERE disk_serial=\"%s\" AND wiped='0';",
 		    		disk_serial);
@@ -206,7 +192,21 @@ int main(int argc, char *argv[])
 
 			unsigned int res_count = mysql_num_rows(result);
 
-			if (res_count == 0) {
+			if (res_count == 0) { // If an entry doesn't exist for that disk insert it.
+
+		   		char * values_str = malloc(sizeof(char) * 512);
+		   		char * keys_str = malloc(sizeof(char) * 512);
+		   		values_str[0] = '\0';
+		   		keys_str[0] = '\0';
+		   		for (i = 0; i < argc - 3; i++){
+					strcat(values_str, values[i]);
+					strcat(keys_str, keys[i]);
+					if (i != argc - 4){
+						strcat(values_str, ", ");
+						strcat(keys_str, ", ");
+					}
+		   				
+		   		}
 
 			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
 			    		keys_str, values_str);
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 		    	if (mysql_query(&mysql, query))
 	     	 		finish_with_error(&mysql);
 
-			} else if (res_count == 1) {
+			} else if (res_count == 1) { // If the entry does exist, update it.
 
 				sprintf(query, "UPDATE disk SET ");
 
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 				if (mysql_query(&mysql, query))
 	     	 		finish_with_error(&mysql);
 
-			} else {
+			} else { // Should not happen
 				printf("%d\n", res_count);
 			}
 
@@ -245,12 +245,17 @@ int main(int argc, char *argv[])
 		} else if (argv[2][0] == '-' && argv[2][1] == 'c') {
 	    	printf( "Database 'computer' Selected\n");
 
+	    	char * asset_no = malloc(sizeof(char) * 128);
+
 	   		char * temp = malloc(sizeof(char) * 128);
-	   		for (i = 3; i < argc; i ++) {
-	   			expand_escapes(temp, argv[i]);
+	   		for (i = 0; i < argc - 3; i ++) {
+	   			expand_escapes(temp, argv[i + 3]);
 
 	   			if(!strncmp("asset_no", temp, strlen("asset_no"))){
 	   				set_kvp(keys[i], values[i], temp);
+   					char * token = strtok(temp, "=");
+					token = strtok(NULL, "=");
+					strcpy(asset_no, token);
 	   			} else if (!strncmp("service_tag", temp, strlen("service_tag"))){
 	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("model", temp, strlen("model"))){
@@ -264,24 +269,65 @@ int main(int argc, char *argv[])
 	   			}
 	   				
 	   		}
-	   		char * values_str = malloc(sizeof(char) * 512);
-	   		char * keys_str = malloc(sizeof(char) * 512);
-	   		values_str[0] = '\0';
-	   		keys_str[0] = '\0';
-	   		for (i = 0; i < argc - 3; i++){
-				strcat(keys_str, keys[i]);
-				strcat(values_str, values[i]);
-				if (i != argc - 4){
-					strcat(values_str, ", ");
-					strcat(keys_str, ", ");
-				}
-			}
-		    sprintf(query,"INSERT INTO computer (%s) VALUES(%s);",
-		    		keys_str, values_str);
 
+
+	   		// Before deciding whether to insert or update we must check if the entry exists already.
+	   		sprintf(query,"SELECT * FROM computer WHERE asset_no=\"%s\";",
+		    		asset_no);
+	   		
+	   		if (mysql_query(&mysql, query))
+			    finish_with_error(&mysql);
+			  
+			MYSQL_RES *result = mysql_store_result(&mysql);
+						  
+			if (result == NULL)
+			    finish_with_error(&mysql);
+
+			unsigned int res_count = mysql_num_rows(result);
+
+			if (res_count == 0) { // If an entry doesn't exist for that disk insert it.
+
+
+
+		   		char * values_str = malloc(sizeof(char) * 512);
+		   		char * keys_str = malloc(sizeof(char) * 512);
+		   		values_str[0] = '\0';
+		   		keys_str[0] = '\0';
+		   		for (i = 0; i < argc - 3; i++){
+					strcat(keys_str, keys[i]);
+					strcat(values_str, values[i]);
+					if (i != argc - 4){
+						strcat(values_str, ", ");
+						strcat(keys_str, ", ");
+					}
+				}
+			    sprintf(query,"INSERT INTO computer (%s) VALUES(%s);",
+			    		keys_str, values_str);
+
+			    	if (mysql_query(&mysql, query))
+		     	 		finish_with_error(&mysql);
+			} if (res_count == 1){
+					sprintf(query, "UPDATE computer SET ");
+
+					for (i = 0; i < argc - 4; i++) {
+						strcat(query, keys[i]);
+						strcat(query, " = ");
+						strcat(query, values[i]);
+						strcat(query, ", ");
+					}
+
+					strcat(query, keys[i]);
+					strcat(query, " = ");
+					strcat(query, values[i]);
+
+					sprintf(temp, " WHERE asset_no = \"%s\";", asset_no);
+					strcat(query, temp);
+
+					if (mysql_query(&mysql, query))
+		     	 		finish_with_error(&mysql);
+
+			}
 		    printf("%s\n", query);
-		    	if (mysql_query(&mysql, query))
-	     	 		finish_with_error(&mysql);
 
 		} else {
 			PRINTARGS

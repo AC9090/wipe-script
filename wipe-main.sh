@@ -96,7 +96,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
   if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
     has_parent=true
 
-    parent=$(whiptail --inputbox "Please enter the asset number:" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+    parent=$(whiptail --inputbox "Please enter the asset number (double check your entry please):" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
     computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
     echo "Collecting device information..."
     computer_model=`lshw -short | grep system | awk '{for (i=2; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`

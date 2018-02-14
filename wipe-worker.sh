@@ -41,11 +41,12 @@ fi
 if [ $smart_check != 0 ]; then
   echo "SMART status for device /dev/$drive: $Disk_Health"
 else
-  echo -e "\e[33mDevice /dev/$drive does not support SMART or it is disabled.\e[0m"
+  echo -e "Device /dev/$drive does not support SMART or it is disabled."
 fi
 
-# If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
 echo "SN $disk_serial"
+
+# If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   if [ $security_erase != 0 ]; then
     # Run hdparm erase
@@ -72,7 +73,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     fi
     echo
     MYTIMEVAR=`date +'%k:%M:%S'`
-    if [ $enhanced_erase == 0 ]; then
+    if [ $enhanced_erase != 0 ]; then
       echo "SE Enhanced"
       echo "Enhanced secure erase of $Disk_Model (/dev/$drive) started at $MYTIMEVAR." && echo "Wiping device using enhanced secure erase." >>  $MYLOGFILENAME && echo >> $MYLOGFILENAME
       if [[ $erase_estimate ]]; then
