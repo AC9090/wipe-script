@@ -22,6 +22,14 @@ erase_estimate=`hdparm -I /dev/$drive | grep -i "for security erase" | awk '{pri
 security_erase=`hdparm -I /dev/$drive | grep -c "Security Mode"`
 smart_check=`hdparm -I /dev/$drive | grep -i "SMART feature set" | grep -c "*"`
 
+# Invert enhanced erase since it is true if it's not enabled.
+if [ $enhanced_erase != 0 ]; then
+  $enhanced_erase=0
+else 
+  $enhanced_erase=1
+fi
+
+
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
   echo "Unlocking device /dev/$drive..."
