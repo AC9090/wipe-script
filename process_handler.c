@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
 				}
 			}
 			if (i >= wshow && i < wshow + num_wins)
-				draw_proc(&wwin[i - wshow], &wstat[i], elapsed, (i == wsel) ?true:false, r_flag);
+				draw_proc(&wwin[i - wshow], &wstat[i], (i == wsel) ?true:false, r_flag);
 
 
 		}
@@ -526,7 +526,7 @@ int main(int argc, char *argv[])
 					wstat[i].status = STATUS_DONE;
 
 				if (i >= wshow && i < wshow + num_wins)
-					draw_proc(&(wwin[i - wshow]), &(wstat[i]), elapsed, (i == wsel) ?true:false, 0b111); 
+					draw_proc(&(wwin[i - wshow]), &(wstat[i]), (i == wsel) ?true:false, 0b111); 
 			}
 		}
 		if (fin){
