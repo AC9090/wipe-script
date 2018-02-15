@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 		   				
 		   		}
 
-			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
+			    sprintf(query,"INSERT INTO disk (synced, %s) VALUES(0, %s);",
 			    		keys_str, values_str);
 
 		    	if (mysql_query(&mysql, query))
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
 
 			} else if (res_count == 1) { // If the entry does exist, update it.
 
-				sprintf(query, "UPDATE disk SET ");
+				sprintf(query, "UPDATE disk SET synced = 0, ");
 
 				for (i = 0; i < argc - 4; i++) {
 					strcat(query, keys[i]);
