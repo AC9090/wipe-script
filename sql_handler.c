@@ -4,6 +4,7 @@
 #include <string.h>
 #include <my_global.h>
 
+#define SERVER_IP "192.168.0.1"
 
 void expand_escapes(char* dest, const char* src)  //Tyler McHenry on stack exchange.
 {
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (!mysql_real_connect(&mysql,"192.168.0.1","wipe","wipepw","wipedb",0,NULL,0))
+	if (!mysql_real_connect(&mysql,SERVER_IP, "wipe","wipepw","wipedb",0,NULL,0))
 	{ 
 
 	    printf( "Failed to connect to MySQL: Error: %s\n", mysql_error(&mysql)); 
@@ -239,8 +240,8 @@ int main(int argc, char *argv[])
 				printf("%d\n", res_count);
 			}
 
-		    printf("%s\n", query);
-		    printf("%s\n",disk_serial);
+		    //printf("%s\n", query);
+		    //printf("%s\n",disk_serial);
 			
 		} else if (argv[2][0] == '-' && argv[2][1] == 'c') {
 	    	printf( "Database 'computer' Selected\n");
@@ -310,7 +311,7 @@ int main(int argc, char *argv[])
 
 				if (mode == 0)
 					exit(2);
-				
+
 				sprintf(query, "UPDATE computer SET ");
 
 				for (i = 0; i < argc - 4; i++) {
@@ -331,7 +332,7 @@ int main(int argc, char *argv[])
 	     	 		finish_with_error(&mysql);
 
 			}
-		    printf("%s\n", query);
+		    //printf("%s\n", query);
 
 		} else {
 			PRINTARGS

@@ -544,6 +544,7 @@ int main(int argc, char *argv[])
 
 	}
 	finish:
+	erase();
 	endwin();
 	printf("Exiting process_handler.\n\n");
 	sleep(2);

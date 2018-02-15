@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
 	  	printf("%.*s", (int) lengths[i], 
     		row[i] ? row[i] : "NULL");
 	  	fprintf(f, "\n");
+	  	printf("\n");
 	}
 
 	printf("Saved %d rows to file: %s\n", res_count, filename);
