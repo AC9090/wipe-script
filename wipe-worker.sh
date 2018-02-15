@@ -29,6 +29,8 @@ else
   $enhanced_erase=1
 fi
 
+./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
+health="$disk_health" source_drive="$source_drive_serial" parent="$parent"
 
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
@@ -39,7 +41,7 @@ fi
 
 # Check SMART status
 if [ $smart_check != 0 ]; then
-  echo "SMART status for device /dev/$drive: $Disk_Health"
+  echo "SMART status for device /dev/$drive: $disk_health"
 else
   echo -e "Device /dev/$drive does not support SMART or it is disabled."
 fi
@@ -165,8 +167,7 @@ else
 
 fi
 
-./sql-handler -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
-source_drive="$source_drive_serial" parent="$parent"
+./sql-handler -u -d disk_serial="$disk_serial" wiped
 
 exitstatus=$?
 if [[ ( $exitstatus != 0 ) ]]; then

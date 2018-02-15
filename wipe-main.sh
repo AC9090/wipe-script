@@ -105,10 +105,17 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
 
     exitstatus=$?
-    if [[ ( $exitstatus != 0 ) ]]; then
+    if [[ ( $exitstatus == 1 ) ]]; then
       echo
       echo "Could not update sql database. Shutting down..."
       exit
+    elif [[ ( $exitstatus == 2) ]]; then
+      if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
+Please check you entered the correct asset number. Would you like to continue? " 20 78); then
+         ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
+      else 
+        echo "Shutting down..."
+      fi
     fi
   fi
 

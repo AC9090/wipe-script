@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (!mysql_real_connect(&mysql,"127.0.0.1","wipe","wipepw","wipedb",0,NULL,0))
+	if (!mysql_real_connect(&mysql,"192.168.0.1","wipe","wipepw","wipedb",0,NULL,0))
 	{ 
 
 	    printf( "Failed to connect to MySQL: Error: %s\n", mysql_error(&mysql)); 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	   		mode = 0;
 	   	}else if (argv[1][0] == '-' && argv[1][1] == 's'){ //select
 	   		mode = 1;
-	   	} else if (argv[1][0] == '-' && argv[1][1] == 'u'){ //update
+	   	} else if (argv[1][0] == '-' && argv[1][1] == 'u'){ //upsert
 	   		mode = 2;
 	   	} else {
 	   		PRINTARGS
@@ -307,24 +307,28 @@ int main(int argc, char *argv[])
 			    	if (mysql_query(&mysql, query))
 		     	 		finish_with_error(&mysql);
 			} if (res_count == 1){
-					sprintf(query, "UPDATE computer SET ");
 
-					for (i = 0; i < argc - 4; i++) {
-						strcat(query, keys[i]);
-						strcat(query, " = ");
-						strcat(query, values[i]);
-						strcat(query, ", ");
-					}
+				if (mode == 0)
+					exit(2);
+				
+				sprintf(query, "UPDATE computer SET ");
 
+				for (i = 0; i < argc - 4; i++) {
 					strcat(query, keys[i]);
 					strcat(query, " = ");
 					strcat(query, values[i]);
+					strcat(query, ", ");
+				}
 
-					sprintf(temp, " WHERE asset_no = \"%s\";", asset_no);
-					strcat(query, temp);
+				strcat(query, keys[i]);
+				strcat(query, " = ");
+				strcat(query, values[i]);
 
-					if (mysql_query(&mysql, query))
-		     	 		finish_with_error(&mysql);
+				sprintf(temp, " WHERE asset_no = \"%s\";", asset_no);
+				strcat(query, temp);
+
+				if (mysql_query(&mysql, query))
+	     	 		finish_with_error(&mysql);
 
 			}
 		    printf("%s\n", query);
