@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 		   				
 		   		}
 
-			    sprintf(query,"INSERT INTO disk (synced, %s) VALUES(0, %s);",
+			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
 			    		keys_str, values_str);
 
 		    	if (mysql_query(&mysql, query))
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
 				if (mode == 0)
 					exit(2);
 
-				sprintf(query, "UPDATE computer SET ");
+				sprintf(query, "UPDATE computer SET synced = 0, ");
 
 				for (i = 0; i < argc - 4; i++) {
 					strcat(query, keys[i]);
