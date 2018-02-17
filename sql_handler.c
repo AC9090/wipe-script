@@ -65,9 +65,15 @@ void set_kvp(char* key, char* value, const char* src)
 	char * token = strtok(temp, "=");
 	strcpy(key, token);
 	token = strtok(NULL, "=");
-	strcat(value, "\"");
-	strcat(value, token);
-	strcat(value, "\"");
+	if (! token){
+		strcat(value, "NULL");
+
+	} else {
+		strcat(value, "\"");
+		strcat(value, token);
+		strcat(value, "\"");
+		
+	}
 
 }
 
@@ -170,6 +176,16 @@ int main(int argc, char *argv[])
    					// set_kvp(keys[i], values[i], temp);
    					keys[i] = "wiped";
    					values[i] = "CURRENT_TIMESTAMP";
+   				} else if (!strncmp("transport", temp, strlen("transport"))){
+	   				set_kvp(keys[i], values[i], temp);
+				} else if (!strncmp("firmware", temp, strlen("firmware"))){
+   					set_kvp(keys[i], values[i], temp);
+   				} else if (!strncmp("form_factor", temp, strlen("form_factor"))){
+	   				set_kvp(keys[i], values[i], temp);
+   				} else if (!strncmp("rpm", temp, strlen("rpm"))){
+	   				set_kvp(keys[i], values[i], temp);
+   				} else if (!strncmp("health", temp, strlen("health"))){
+	   				set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				printf("Error, argument not supported: %s\n", temp);
 	   				PRINTARGS

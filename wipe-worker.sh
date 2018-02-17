@@ -18,19 +18,33 @@ disk_model=`hdparm -I /dev/$drive | grep "Model Number" | awk -F":" '{print $2}'
 disk_serial=`hdparm -I /dev/$drive | grep "Serial Number" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 disk_size=`hdparm -I /dev/$drive | grep 1000: | grep -oP '(?<=\()[^\)]+'`
 enhanced_erase=`hdparm -I /dev/$drive | grep -i enhanced | grep -c not`
+# Invert enhanced erase since it is true if it's not enabled.
+if [ $enhanced_erase != 0 ]; then
+  enhanced_erase=0
+else 
+  enhanced_erase=1
+fi
 erase_estimate=`hdparm -I /dev/$drive | grep -i "for security erase" | awk '{print $1}'`
 security_erase=`hdparm -I /dev/$drive | grep -c "Security Mode"`
 smart_check=`hdparm -I /dev/$drive | grep -i "SMART feature set" | grep -c "*"`
 
-# Invert enhanced erase since it is true if it's not enabled.
-if [ $enhanced_erase != 0 ]; then
-  $enhanced_erase=0
+firmware=`hdparm -I /dev/$drive | grep "Firmware Revision" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+
+sata_count=`hdparm -I /dev/$drive | grep "Transport" | awk -F":" '{print $2}' | grep -c SATA`
+
+if [ $sata_count != 0 ]; then
+  transport="SATA"
 else 
-  $enhanced_erase=1
+  transport="IDE"
 fi
 
+
+form_factor=`hdparm -I /dev/$drive | grep "Form Factor" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+rpm=`hdparm -I /dev/$drive | grep "Nominal Media Rotation Rate" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+
+
 ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
-health="$disk_health" source_drive="$source_drive_serial" parent="$parent"
+health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" transport="$transport" form_factor="$form_factor" rpm="$rpm"
 
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
@@ -142,7 +156,7 @@ fi
 if [ $smart_check != 0 ] && [ $disk_health != PASSED ]; then
   echo -e "SMART check of /dev/$drive failed. Replace hard drive."
   echo  "ER SMART check failed."
-  read -p "Press any key to continue." -n1 -s
+  #read -p "Press any key to continue." -n1 -s
   exit
 fi
 
