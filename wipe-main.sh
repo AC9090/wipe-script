@@ -115,6 +115,7 @@ Please check you entered the correct asset number. Would you like to continue? "
          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
       else 
         echo "Shutting down..."
+        exit
       fi
     fi
   fi
