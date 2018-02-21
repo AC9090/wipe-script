@@ -12,6 +12,61 @@ void finish_with_error(MYSQL *con)
   exit(1);        
 }
 
+void print_to_csv(FILE * f, MYSQL mysql, char * table)
+{
+
+	char * query = malloc(sizeof(char) * 256);
+
+	sprintf(query,"SELECT * FROM %s WHERE synced=0;", table);
+	
+	if (mysql_query(&mysql, query))
+    finish_with_error(&mysql);
+  
+	MYSQL_RES *result = mysql_store_result(&mysql);
+			  
+	if (result == NULL)
+    	finish_with_error(&mysql);
+
+	unsigned int res_count = mysql_num_rows(result);
+	unsigned int num_fields = mysql_num_fields(result);
+	unsigned int i;
+	MYSQL_ROW row;
+
+	if (res_count == 0) {
+		printf("No unsynced records were found for table %s\n", table);
+		return;
+	}
+
+	fprintf(f, "%s\n", table);
+	while ((row = mysql_fetch_row(result)))
+	{
+	   	unsigned long *lengths;
+	   	lengths = mysql_fetch_lengths(result);
+	   	for(i = 0; i < num_fields - 1; i++)
+	   	{
+	       fprintf(f, "%.*s|", (int) lengths[i], 
+	              row[i] ? row[i] : "NULL");
+	       printf("%.*s|", (int) lengths[i], 
+	              row[i] ? row[i] : "NULL");
+	   	}
+       	fprintf(f, "%.*s", (int) lengths[i], 
+    		row[i] ? row[i] : "NULL");
+	  	printf("%.*s", (int) lengths[i], 
+    		row[i] ? row[i] : "NULL");
+	  	fprintf(f, "\n");
+	  	printf("\n");
+	}
+
+	printf("Saved %d rows from %s to file.\n", res_count, table);
+	sprintf(query,"UPDATE %s SET  sync_time=CURRENT_TIMESTAMP synced=1 WHERE synced=0;", table);
+	
+	if (mysql_query(&mysql, query))
+    	finish_with_error(&mysql);
+
+
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -48,60 +103,17 @@ int main(int argc, char *argv[])
 
    	}
 
-	char * query = malloc(sizeof(char) * 256);
-
-	sprintf(query,"SELECT * FROM disk WHERE synced=0;");
-	
-	if (mysql_query(&mysql, query))
-    finish_with_error(&mysql);
-  
-	MYSQL_RES *result = mysql_store_result(&mysql);
-			  
-	if (result == NULL)
-    	finish_with_error(&mysql);
-
-	unsigned int res_count = mysql_num_rows(result);
-	unsigned int num_fields = mysql_num_fields(result);
-	unsigned int i;
-	MYSQL_ROW row;
-
-	if (res_count == 0) {
-		printf("No unsynced records were found. Exiting.\n");
-		exit(0);
-	}
-
 	FILE *f = fopen(filename, "w");
 	if (f == NULL)
 	{
 	    printf("Error opening file!\n");
 	    exit(1);
 	}
+	printf("Using file %s \n", filename);
 
-	while ((row = mysql_fetch_row(result)))
-	{
-	   	unsigned long *lengths;
-	   	lengths = mysql_fetch_lengths(result);
-	   	for(i = 0; i < num_fields - 1; i++)
-	   	{
-	       fprintf(f, "%.*s|", (int) lengths[i], 
-	              row[i] ? row[i] : "NULL");
-	       printf("%.*s|", (int) lengths[i], 
-	              row[i] ? row[i] : "NULL");
-	   	}
-       	fprintf(f, "%.*s", (int) lengths[i], 
-    		row[i] ? row[i] : "NULL");
-	  	printf("%.*s", (int) lengths[i], 
-    		row[i] ? row[i] : "NULL");
-	  	fprintf(f, "\n");
-	  	printf("\n");
-	}
-
-	printf("Saved %d rows to file: %s\n", res_count, filename);
-	sprintf(query,"UPDATE disk SET synced=1 WHERE synced=0 AND wiped!=0;");
-	
-	if (mysql_query(&mysql, query))
-    	finish_with_error(&mysql);
-
+	print_to_csv(f, mysql, "disk");
+	print_to_csv(f, mysql, "computer");
+	fclose(f);
 
 
 }
