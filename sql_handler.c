@@ -279,6 +279,8 @@ int main(int argc, char *argv[])
 	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("processor", temp, strlen("processor"))){
 	   				set_kvp(keys[i], values[i], temp);
+   				} else if (!strncmp("is_laptop", temp, strlen("is_laptop"))){
+   					set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				PRINTARGS
 	   				printf("%s\n", temp);

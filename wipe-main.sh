@@ -97,12 +97,13 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     has_parent=true
 
     parent=$(whiptail --inputbox "Please enter the asset number (double check your entry please):" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+    is_laptop=$(whiptail --inputbox "Is this computer a laptop?" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
     computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
     echo "Collecting device information..."
     computer_model=`lshw -short | grep system | awk '{for (i=2; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
     computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
 
-    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
+    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" processor="$computer_processor"
 
     exitstatus=$?
     if [[ ( $exitstatus == 1 ) ]]; then
@@ -112,7 +113,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     elif [[ ( $exitstatus == 2) ]]; then
       if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
 Please check you entered the correct asset number. Would you like to continue? " 20 78); then
-         ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" model="$computer_model" processor="$computer_processor"
+          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" processor="$computer_processor"
       else 
         echo "Shutting down..."
         exit
