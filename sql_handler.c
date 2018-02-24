@@ -186,6 +186,8 @@ int main(int argc, char *argv[])
 	   				set_kvp(keys[i], values[i], temp);
    				} else if (!strncmp("health", temp, strlen("health"))){
 	   				set_kvp(keys[i], values[i], temp);
+				} else if (!strncmp("rotational", temp, strlen("rotational"))){
+   					set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				printf("Error, argument not supported: %s\n", temp);
 	   				PRINTARGS

@@ -38,13 +38,15 @@ else
   transport="IDE"
 fi
 
+rotational=`cat /sys/block/sda/queue/rotational`
+
 
 form_factor=`hdparm -I /dev/$drive | grep "Form Factor" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 rpm=`hdparm -I /dev/$drive | grep "Nominal Media Rotation Rate" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 
 
 ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
-health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" transport="$transport" form_factor="$form_factor" rpm="$rpm"
+health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" rotational=$rotational transport="$transport" form_factor="$form_factor" rpm="$rpm"
 
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
