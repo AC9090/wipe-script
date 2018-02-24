@@ -58,7 +58,7 @@ void print_to_csv(FILE * f, MYSQL mysql, char * table)
 	}
 
 	printf("Saved %d rows from %s to file.\n", res_count, table);
-	sprintf(query,"UPDATE %s SET  sync_time=CURRENT_TIMESTAMP synced=1 WHERE synced=0;", table);
+	sprintf(query,"UPDATE %s SET  sync_time=CURRENT_TIMESTAMP, synced=1 WHERE synced=0;", table);
 	
 	if (mysql_query(&mysql, query))
     	finish_with_error(&mysql);

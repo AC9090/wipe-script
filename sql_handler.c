@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (!mysql_real_connect(&mysql,SERVER_IP, "wipe","wipepw","wipedb",0,NULL,0))
+	if (!mysql_real_connect(&mysql, SERVER_IP, "wipe","wipepw","wipedb",0,NULL,0))
 	{ 
 
 	    printf( "Failed to connect to MySQL: Error: %s\n", mysql_error(&mysql)); 
@@ -217,15 +217,19 @@ int main(int argc, char *argv[])
 		   		char * keys_str = malloc(sizeof(char) * 512);
 		   		values_str[0] = '\0';
 		   		keys_str[0] = '\0';
+		   		strcat(values_str, "\"");
+		   		strcat(keys_str, "\"");
 		   		for (i = 0; i < argc - 3; i++){
 					strcat(values_str, values[i]);
 					strcat(keys_str, keys[i]);
 					if (i != argc - 4){
-						strcat(values_str, ", ");
-						strcat(keys_str, ", ");
+						strcat(values_str, "\", \"");
+						strcat(keys_str, "\", \"");
 					}
 		   				
 		   		}
+		   		strcat(values_str, "\"");
+		   		strcat(keys_str, "\"");
 
 			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
 			    		keys_str, values_str);
@@ -325,8 +329,9 @@ int main(int argc, char *argv[])
 			    sprintf(query,"INSERT INTO computer (%s) VALUES(%s);",
 			    		keys_str, values_str);
 
-			    	if (mysql_query(&mysql, query))
-		     	 		finish_with_error(&mysql);
+		    	if (mysql_query(&mysql, query))
+	     	 		finish_with_error(&mysql);
+
 			} if (res_count == 1){
 
 				if (mode == 0)
