@@ -282,6 +282,8 @@ int main(int argc, char *argv[])
 	   			} else if (!strncmp("service_tag", temp, strlen("service_tag"))){
 	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("model", temp, strlen("model"))){
+	   				set_kvp(keys[i], values[i], temp);	   			
+	   			} else if (!strncmp("make", temp, strlen("make"))){
 	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("processor", temp, strlen("processor"))){
 	   				set_kvp(keys[i], values[i], temp);

@@ -105,10 +105,11 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     fi
 
     echo "Collecting device information..."
-    computer_model=`lshw -short | grep system | awk '{for (i=2; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
+    computer_manufacturer=`dmidecode | grep -A3 '^System Information' | grep "Manufacturer" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+    computer_model=`dmidecode | grep -A3 '^System Information' | grep "Product" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
     computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
 
-    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" processor="$computer_processor"
+    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
 
     exitstatus=$?
     if [[ ( $exitstatus == 1 ) ]]; then
@@ -118,7 +119,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     elif [[ ( $exitstatus == 2) ]]; then
       if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
 Please check you entered the correct asset number. Would you like to continue? " 20 78); then
-          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" processor="$computer_processor"
+          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" make="$computer_manufacturer" processor="$computer_processor"
       else 
         echo "Shutting down..."
         exit
