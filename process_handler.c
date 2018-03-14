@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 		time(&current);
 		elapsed = difftime(current,start);
 		mvprintw(1,0, "TIME ELAPSED: %02.lf hr %02.lf min %02.lf sec       ", floor(elapsed/(60l * 60l)),
-			floor((elapsed)/60l), fmod(elapsed, 60l));
+			fmod(floor((elapsed)/60l), 60l), fmod(elapsed, 60l));
 
 		// Print a diamond with a color corresponding to the status of the subprocess.
 		for(i = 0; i < pcount; i ++){
