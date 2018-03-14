@@ -7,6 +7,9 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+#Supress kernel messages
+dmesg -n 1
+
 # Initial loading message
 tagline="wipe utility for SATA drives"
 if [ -z "$1" ]; then
@@ -41,7 +44,6 @@ if [ $drives_count == 0 ]; then
   whiptail --title "$brand" --msgbox "No SATA drives detected. Select Ok to shut down." 8 78
   echo
   echo "Shutting down..."
-  #shutdown now
   exit
 else
 #   echo whiptail --title \"$brand\" --checklist --separate-output \"\n$drives_count drives are connected. \
@@ -165,7 +167,7 @@ ${drives_selected[@]} " 20 78); then
   
 
   echo "All subprocesses are complete."
-  
+  dmesg -n warn
   sleep 10
 fi
 

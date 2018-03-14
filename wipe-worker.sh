@@ -46,7 +46,7 @@ rpm=`hdparm -I /dev/$drive | grep "Nominal Media Rotation Rate" | awk -F":" '{pr
 
 
 ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
-health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" rotational=$rotational transport="$transport" form_factor="$form_factor" rpm="$rpm"
+health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" rotational="$rotational" transport="$transport" form_factor="$form_factor" rpm="$rpm"
 
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
@@ -120,7 +120,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       echo -e "Disk erased successfully." && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
     else
-      echo
+      echo  "ER hdparm returned error $?"
       echo -e "Erase failed. Replace hard drive." && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
       exit
@@ -134,7 +134,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo "ET Unknown"
     echo
     sleep 3s
-    nwipe --autonuke --method=dodshort --nowait --logfile=$MYLOGFILENAME /dev/$drive
+    nwipe --autonuke --method=dodshort --nowait --nogui --logfile=$MYLOGFILENAME /dev/$drive
     MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
     #echo "Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
     #echo "$NWIPEVERSION" >> $MYLOGFILENAME
@@ -145,7 +145,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       echo
     else
       echo
-      echo "ER Nwipe failed."
+      echo "ER Nwipe failed with error: $?."
       echo
       exit
     fi
