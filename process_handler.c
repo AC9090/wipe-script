@@ -34,8 +34,8 @@
 #define PRINT_SN(iw, sn) mvwprintw(iw, 2, 0, "SERIAL: %s\n", sn)
 #define PRINT_ET(iw, et) mvwprintw(iw, 3, 0, "ESTIMATED_TIME: %s\n", et)
 
-#define PRINT_ER(iw, er) mvwprintw(iw, 4, 0, "ERROR: %s     \n", er)
-#define PRINT_DONE(iw) mvwprintw(iw, 4, 0, "*****DONE*****          \n")
+#define PRINT_ER(iw, er) mvwprintw(iw, 5, 0, "ERROR: %s     \n", er)
+#define PRINT_DONE(iw) mvwprintw(iw, 5, 0, "*****DONE*****          \n")
 
 
 #define STATUS_RUNNING 0
@@ -501,9 +501,13 @@ int main(int argc, char *argv[])
 					
 				}
 			}
+
+			// if (fmod(s->est_time - elapsed, 60l)) == 0) // To be tested
+			// 	r_flag = r_flag | REFRESH_PAD | REFRESH_INFO_BORDER | REFRESH_SELECTED;
+
 			if (i >= wshow && i < wshow + num_wins)
 				draw_proc(&wwin[i - wshow], &wstat[i], (i == wsel) ?true:false, r_flag);
-
+ 
 
 		}
 

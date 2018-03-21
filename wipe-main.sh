@@ -168,7 +168,7 @@ ${drives_selected[@]} " 20 78); then
 
   echo "All subprocesses are complete."
   dmesg -n warn
-  sleep 10
+  sleep 2
 fi
 
 

@@ -168,6 +168,10 @@ int main(int argc, char *argv[])
 	   				set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("enhanced_erase", temp, strlen("enhanced_erase"))){
 	   				set_kvp(keys[i], values[i], temp);
+   				} else if (!strncmp("health", temp, strlen("health"))){
+	   				set_kvp(keys[i], values[i], temp);
+				} else if (!strncmp("rotational", temp, strlen("rotational"))){
+   					set_kvp(keys[i], values[i], temp);
 	   			} else if (!strncmp("source_drive", temp, strlen("source_drive"))){
 	   				set_kvp(keys[i], values[i], temp);
 				} else if (!strncmp("parent", temp, strlen("parent"))){
@@ -184,10 +188,6 @@ int main(int argc, char *argv[])
 	   				set_kvp(keys[i], values[i], temp);
    				} else if (!strncmp("rpm", temp, strlen("rpm"))){
 	   				set_kvp(keys[i], values[i], temp);
-   				} else if (!strncmp("health", temp, strlen("health"))){
-	   				set_kvp(keys[i], values[i], temp);
-				} else if (!strncmp("rotational", temp, strlen("rotational"))){
-   					set_kvp(keys[i], values[i], temp);
 	   			} else {
 	   				printf("Error, argument not supported: %s\n", temp);
 	   				PRINTARGS
@@ -217,23 +217,23 @@ int main(int argc, char *argv[])
 		   		char * keys_str = malloc(sizeof(char) * 512);
 		   		values_str[0] = '\0';
 		   		keys_str[0] = '\0';
-		   		strcat(values_str, "\"");
-		   		strcat(keys_str, "\"");
+		   		// strcat(values_str, "\"");
+		   		// strcat(keys_str, "\"");
 		   		for (i = 0; i < argc - 3; i++){
 					strcat(values_str, values[i]);
 					strcat(keys_str, keys[i]);
 					if (i != argc - 4){
-						strcat(values_str, "\", \"");
-						strcat(keys_str, "\", \"");
+						strcat(values_str, ", ");
+						strcat(keys_str, ", ");
 					}
 		   				
 		   		}
-		   		strcat(values_str, "\"");
-		   		strcat(keys_str, "\"");
+		   		// strcat(values_str, "\"");
+		   		// strcat(keys_str, "\"");
 
 			    sprintf(query,"INSERT INTO disk (%s) VALUES(%s);",
 			    		keys_str, values_str);
-
+			    printf("%s\n", query);
 		    	if (mysql_query(&mysql, query))
 	     	 		finish_with_error(&mysql);
 

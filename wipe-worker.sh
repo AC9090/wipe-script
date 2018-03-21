@@ -132,7 +132,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo "Disabled"
     echo -e "Device /dev/$drive does not support security erase. Falling back to nwipe..."
     echo "ET Unknown"
-    echo
+    echo "Note that an 80 GB drive can take more than 2 hours to wipe with nwipe. \n  To cancel before finish: \n wait until all other disks are done \n then press CTRL^c "
     sleep 3s
     nwipe --autonuke --method=dodshort --nowait --nogui --logfile=$MYLOGFILENAME /dev/$drive
     MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
