@@ -17,7 +17,7 @@ void print_to_csv(FILE * f, MYSQL mysql, char * table)
 
 	char * query = malloc(sizeof(char) * 256);
 
-	sprintf(query,"SELECT * FROM %s WHERE synced=0;", table);
+	sprintf(query,"SELECT * FROM disk d1 WHERE wiped = (SELECT max(wiped) FROM disk d3 WHERE d3.disk_serial = d1.disk_serial) and synced = 0;", table);
 	
 	if (mysql_query(&mysql, query))
     finish_with_error(&mysql);
