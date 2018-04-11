@@ -400,7 +400,7 @@ int main(int argc, char *argv[])
 					wsel += pcount -1;
 					wshow = pcount - num_wins;
 				}
-				r_flag |= REFRESH_SELECTED;
+				r_flag |= REFRESH_SELECTED | REFRESH_INFO_BORDER;
 
 				break;
 			
@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
 					wshow = 0;
 				}
 
-				r_flag |= REFRESH_SELECTED;
+				r_flag |= REFRESH_SELECTED | REFRESH_INFO_BORDER;
 
 
 				break;
