@@ -46,14 +46,6 @@ void print_to_csv(FILE * f, MYSQL mysql, char * table, MYSQL_RES *result)
 	  	fprintf(f, "\n");
 	  	printf("\n");
 	}
-	char * query = malloc(sizeof(char) * 512);
-
-	printf("Saved %d rows from %s to file.\n", res_count, table);
-	sprintf(query,"UPDATE %s SET  sync_time=CURRENT_TIMESTAMP, synced=1 WHERE synced=0;", table);
-	
-	if (mysql_query(&mysql, query))
-    	finish_with_error(&mysql);
-
 
 }
 
@@ -105,7 +97,9 @@ int main(int argc, char *argv[])
 
 	char * query = malloc(sizeof(char) * 512);
 
-	sprintf(query,"SELECT * FROM disk d1 WHERE wiped = (SELECT max(wiped) FROM disk d3 WHERE d3.disk_serial = d1.disk_serial) and synced = 0;");
+	// Disk
+
+	sprintf(query,"SELECT * FROM disk d1 WHERE  wiped = (SELECT max(wiped) FROM disk d3 WHERE d3.disk_serial = d1.disk_serial) and synced = 0; ");
 	
 	if (mysql_query(&mysql, query))
     	finish_with_error(&mysql);
@@ -117,10 +111,21 @@ int main(int argc, char *argv[])
 
 	print_to_csv(f, mysql, "disk", result);
 
-	sprintf(query, "SELECT * FROM computer WHERE synced = 0");
+	sprintf(query,"UPDATE disk SET  sync_time=CURRENT_TIMESTAMP, synced=1 WHERE wiped = (SELECT max(wiped) FROM disk d3 WHERE d3.disk_serial = d1.disk_serial) and synced = 0;");
 
 	if (mysql_query(&mysql, query))
     	finish_with_error(&mysql);
+
+    // Computer
+
+	printf("Saved %d rows from %s to file.\n", res_count, table);
+
+	sprintf(query, "SELECT * FROM computer WHERE synced = 0");
+
+	
+	if (mysql_query(&mysql, query))
+    	finish_with_error(&mysql);
+
   
 	result = mysql_store_result(&mysql);
 			  
@@ -128,6 +133,13 @@ int main(int argc, char *argv[])
     	finish_with_error(&mysql);
 
 	print_to_csv(f, mysql, "computer", result);
+
+
+	sprintf(query,"UPDATE computer SET  sync_time=CURRENT_TIMESTAMP, synced=1 where synced=0;");
+
+	if (mysql_query(&mysql, query))
+    	finish_with_error(&mysql);
+
 	fclose(f);
 
 
