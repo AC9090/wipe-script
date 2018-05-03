@@ -46,6 +46,7 @@ void print_to_csv(FILE * f, MYSQL mysql, char * table, MYSQL_RES *result)
 	  	fprintf(f, "\n");
 	  	printf("\n");
 	}
+	printf("Saved %d rows from %s to file.\n", res_count, table);
 
 }
 
@@ -117,8 +118,6 @@ int main(int argc, char *argv[])
     	finish_with_error(&mysql);
 
     // Computer
-
-	printf("Saved %d rows from %s to file.\n", res_count, table);
 
 	sprintf(query, "SELECT * FROM computer WHERE synced = 0");
 

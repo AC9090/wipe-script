@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS=-m32 -D TEST
+CFLAGS=-m32 #-D TEST
 
 all : processhandler sqlhandler sqlcopy
 
