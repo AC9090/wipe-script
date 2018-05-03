@@ -120,16 +120,17 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
       echo -e "Disk erased successfully." && echo "Blanked device successfully." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
     else
-      echo  "ER hdparm returned error $?"
+      echo  "ER hdparm returned error: $?"
       echo -e "Erase failed. Replace hard drive." && echo "Wipe of device failed." >> $MYLOGFILENAME && echo >> $MYLOGFILENAME
       echo
       exit
     fi
+    
   else
     #
     # Run nwipe
     #
-    echo "Disabled"
+    echo "SE Disabled"
     echo -e "Device /dev/$drive does not support security erase. Falling back to nwipe..."
     echo "ET Unknown"
     echo "Note that an 80 GB drive can take more than 2 hours to wipe with nwipe. \n  To cancel before finish: \n wait until all other disks are done \n then press CTRL^c "
