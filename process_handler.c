@@ -88,7 +88,7 @@ void draw_proc(WipeWIN *w, WipeStatus *s, bool selected, int refresh_flag)
 
 		if (elapsed > s->est_time){
 			mvwprintw(w->infowin, 4,0, "T: +%02.lf:%02.lf:%02.lf      ", floor((elapsed - s->est_time) / (60l * 60l)),
-				floor((elapsed - s->est_time)/60l), fmod(elapsed - s->est_time, 60l));
+				floor(fmod((elapsed - s->est_time)/60l), 60l), fmod(elapsed - s->est_time, 60l));
 			//if (clone)
 			//	wstat[i].pbar[5] = "CLONING!";
 		} else {
