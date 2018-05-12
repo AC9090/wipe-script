@@ -46,8 +46,6 @@ if [ $drives_count == 0 ]; then
   echo "Shutting down..."
   exit
 else
-#   echo whiptail --title \"$brand\" --checklist --separate-output \"\n$drives_count drives are connected. \
-# The selected drives will be wiped in parallel.\" 22 78 12 $drives_available 3>&1 1>&2 2>&3
 
   # Allow selection of drives to wipe
   drives_selected=$(whiptail --title "$brand" --checklist --separate-output "\n$drives_count drives are connected. \

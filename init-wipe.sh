@@ -55,15 +55,14 @@ while true; do
         `lsblk -nio MODEL /dev/$drive | awk '{print $1}'`_`lsblk -nio SIZE,TYPE /dev/$drive | grep disk | awk '{print $1}'` "
       done
 
-      drive_selected=$(whiptail --title "$brand" --menu "\nPlease select a drive to get information from.\nUse up and down arrows to scroll and press 'q' to quit the info screen." \
-        22 78 12  $drives_available  3>&1 1>&2 2>&3)
+      drive_selected=$(whiptail --title "$brand" --menu "\nPlease select a drive to test for bad blocks." 22 78 12  $drives_available  3>&1 1>&2 2>&3)
       badblocks -wvs $drive_selected
 
 
   	elif [ "$selection" == "Shutdown" ]; then
     	echo
     	echo "Shutting down..."
-    	#shutdown now
+    	halt
     	exit
 
     elif [ "$selection" == "Exit" ]; then

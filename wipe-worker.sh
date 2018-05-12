@@ -38,7 +38,7 @@ else
   transport="IDE"
 fi
 
-rotational=`cat /sys/block/sda/queue/rotational`
+rotational=`cat /sys/block/$drive/queue/rotational`
 
 
 form_factor=`hdparm -I /dev/$drive | grep "Form Factor" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
