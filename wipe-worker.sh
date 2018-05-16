@@ -18,7 +18,13 @@ disk_model=`hdparm -I /dev/$drive | grep "Model Number" | awk -F":" '{print $2}'
 disk_serial=`hdparm -I /dev/$drive | grep "Serial Number" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 disk_size=`hdparm -I /dev/$drive | grep 1000: | grep -oP '(?<=\()[^\)]+'`
 enhanced_erase=`hdparm -I /dev/$drive | grep -i enhanced | grep -c not`
-# Invert enhanced erase since it is true if it's not enabled.
+# Inv0ert enhanced erase since it is true if it's not enabled.
+if [ "$disk_serial" == "" ]; then 
+  echo "ER Could not obtain disk serial."
+  echo -e "\nThe disk serial number could not be obtained.\n This may indicate a fault with the disk."
+  exit 1
+fi
+
 if [ $enhanced_erase != 0 ]; then
   enhanced_erase=0
 else 
