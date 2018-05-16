@@ -43,7 +43,10 @@ while true; do
 
    		drive_selected=$(whiptail --title "$brand" --menu "\nPlease select a drive to get information from.\nUse up and down arrows to scroll and press 'q' to quit the info screen." \
    			22 78 12  $drives_available  3>&1 1>&2 2>&3)
-    	hdparm -I $drive_selected | less
+
+      if [ $? == 0 ]; then 
+    		hdparm -I $drive_selected | less
+      fi
 
     elif [ "$selection" == "Badblocks" ]; then
 
@@ -56,8 +59,10 @@ while true; do
       done
 
       drive_selected=$(whiptail --title "$brand" --menu "\nPlease select a drive to test for bad blocks." 22 78 12  $drives_available  3>&1 1>&2 2>&3)
-      badblocks -wvs $drive_selected
 
+      if [ $? == 0 ]; then 
+      	badblocks -wvs $drive_selected
+      fi
 
   	elif [ "$selection" == "Shutdown" ]; then
     	echo

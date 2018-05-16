@@ -94,9 +94,15 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
 
   has_parent=false
   if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
-    has_parent=true
+
 
     parent=$(whiptail --inputbox "Please enter the asset number (double check your entry please):" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+    
+    exitstatus=$?
+    if [ $exitstatus != 0 ]; then
+      exit
+    fi
+    
     computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
     if (whiptail --title "$brand" --yesno "Is this computer a laptop?" 20 78 ); then  
       is_laptop=1
@@ -112,11 +118,11 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
 
     exitstatus=$?
-    if [[ ( $exitstatus == 1 ) ]]; then
+    if [ $exitstatus == 1 ]; then
       echo
       echo "Could not update sql database. Shutting down..."
       exit
-    elif [[ ( $exitstatus == 2) ]]; then
+    elif [ $exitstatus == 2 ]; then
       if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
 Please check you entered the correct asset number. Would you like to continue? " 20 78); then
           ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" make="$computer_manufacturer" processor="$computer_processor"
@@ -125,6 +131,9 @@ Please check you entered the correct asset number. Would you like to continue? "
         exit
       fi
     fi
+
+    has_parent=true
+
   fi
 
   # Wipe confirmation
@@ -166,7 +175,7 @@ ${drives_selected[@]} " 20 78); then
 
   echo "All subprocesses are complete."
   dmesg -n warn
-  sleep 2
+  sleep 1
 fi
 
 
