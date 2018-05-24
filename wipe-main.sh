@@ -1,6 +1,7 @@
 #!/bin/bash
 
 MYSERVERIP="192.168.0.1"
+USESQL=true
 # Exit if not run as root (sudo)
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -91,48 +92,50 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     fi
   fi
   
+  if [ USESQL == true ]; then
+    has_parent=false
+    if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
 
-  has_parent=false
-  if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
 
-
-    parent=$(whiptail --inputbox "Please enter the asset number (double check your entry please):" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
-    
-    exitstatus=$?
-    if [ $exitstatus != 0 ]; then
-      exit
-    fi
-    
-    computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
-    if (whiptail --title "$brand" --yesno "Is this computer a laptop?" 20 78 ); then  
-      is_laptop=1
-    else 
-      is_laptop=0
-    fi
-
-    echo "Collecting device information..."
-    computer_manufacturer=`dmidecode | grep -A3 '^System Information' | grep "Manufacturer" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
-    computer_model=`dmidecode | grep -A3 '^System Information' | grep "Product" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
-    computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
-
-    ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
-
-    exitstatus=$?
-    if [ $exitstatus == 1 ]; then
-      echo
-      echo "Could not update sql database. Shutting down..."
-      exit
-    elif [ $exitstatus == 2 ]; then
-      if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
-Please check you entered the correct asset number. Would you like to continue? " 20 78); then
-          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" make="$computer_manufacturer" processor="$computer_processor"
-      else 
-        echo "Shutting down..."
+      parent=$(whiptail --inputbox "Please enter the asset number (double check your entry please):" 8 78 1000 --title "$brand" 3>&1 1>&2 2>&3)
+      
+      exitstatus=$?
+      if [ $exitstatus != 0 ]; then
         exit
       fi
-    fi
+      
+      computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
+      if (whiptail --title "$brand" --yesno "Is this computer a laptop?" 20 78 ); then  
+        is_laptop=1
+      else 
+        is_laptop=0
+      fi
 
-    has_parent=true
+      echo "Collecting device information..."
+      computer_manufacturer=`dmidecode | grep -A3 '^System Information' | grep "Manufacturer" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+      computer_model=`dmidecode | grep -A3 '^System Information' | grep "Product" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+      computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
+
+      ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
+
+      exitstatus=$?
+      if [ $exitstatus == 1 ]; then
+        echo
+        echo "Could not update sql database. Shutting down..."
+        exit
+      elif [ $exitstatus == 2 ]; then
+        if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
+Please check you entered the correct asset number. Would you like to continue? " 20 78); then
+            ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model" make="$computer_manufacturer" processor="$computer_processor"
+        else 
+          echo "Shutting down..."
+          exit
+        fi
+      fi
+
+      has_parent=true
+
+    fi
 
   fi
 
