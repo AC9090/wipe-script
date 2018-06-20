@@ -51,7 +51,7 @@ rotational=`cat /sys/block/$drive/queue/rotational`
 form_factor=`hdparm -I /dev/$drive | grep "Form Factor" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 rpm=`hdparm -I /dev/$drive | grep "Nominal Media Rotation Rate" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 
-if [ USESQL == true ]; then
+if [ $USESQL == true ]; then
   ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
 health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" rotational="$rotational" transport="$transport" form_factor="$form_factor" rpm="$rpm"
 
@@ -92,9 +92,9 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     echo
     hdparm --security-set-pass password /dev/$drive >/dev/null
     if [ $? -eq 0 ]; then
-      echo -e "\e[32mPassword set\e[0m"
+      echo "Password set."
     else
-      echo -e "\e[31mFailed to set password!\e[0m"
+      echo "ER Failed to set password."
       echo
       
     fi
@@ -136,8 +136,12 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
     fi
 
     # Ensure drive is unlocked.
+    hdparm --security-set-pass password /dev/$drive >/dev/null
     hdparm --security-disable password /dev/$drive
-    hdparm --security-set-pass NULL /dev/$drive
+    if [[ ( $exitstatus != 0 ) ]] ; then
+      echo "Failed to unlock disk."
+      echo
+    fi
     
   else
     #
@@ -195,7 +199,7 @@ else
   source_drive_serial=`hdparm -I /dev/$source_drive | grep "Serial Number" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 fi
 
-if [ USESQL == true ]; then
+if [ $USESQL == true ]; then
   ./sql-handler -u -d disk_serial="$disk_serial" wiped
 fi
 

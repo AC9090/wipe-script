@@ -92,7 +92,7 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
     fi
   fi
   
-  if [ USESQL == true ]; then
+  if [ $USESQL == true ]; then
     has_parent=false
     if (whiptail --title "$brand" --yesno "Does this computer have an asset number associated with it?" 20 78); then
 
