@@ -19,13 +19,9 @@ disk_model=`hdparm -I /dev/$drive | grep "Model Number" | awk -F":" '{print $2}'
 disk_serial=`hdparm -I /dev/$drive | grep "Serial Number" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 disk_size=`hdparm -I /dev/$drive | grep 1000: | grep -oP '(?<=\()[^\)]+'`
 enhanced_erase=`hdparm -I /dev/$drive | grep -i enhanced | grep -c not`
-# Inv0ert enhanced erase since it is true if it's not enabled.
-if [ "$disk_serial" == "" ]; then 
-  echo "ER Could not obtain disk serial."
-  echo -e "\nThe disk serial number could not be obtained.\n This may indicate a fault with the disk."
-  exit 1
-fi
 
+
+# Inv0ert enhanced erase since it is true if it's not enabled.
 if [ $enhanced_erase != 0 ]; then
   enhanced_erase=0
 else 
@@ -57,6 +53,15 @@ health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmw
 
 fi
 
+if [ -z $disk_serial ] ; then
+  echo "Could not retrieve disk serial."
+  echo "This could indicate the disk has failed"
+  echo "ER Disk serial unknown."
+  exit
+fi
+
+echo "SN $disk_serial"
+
 # Check if drive is locked and unlock if necessary
 if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
   echo "Unlocking device /dev/$drive..."
@@ -65,13 +70,20 @@ if [ $security_erase != 0 ] && [ $disk_lock == 0 ]; then
 fi
 
 # Check SMART status
+if [ -z $disk_health ] ; then
+  echo "Could not retrieve disk health."
+  echo "It may work if you repeat the wipe."
+  echo "ER Disk health unknown."
+  exit
+fi
+
 if [ $smart_check != 0 ]; then
   echo "SMART status for device /dev/$drive: $disk_health"
 else
   echo -e "Device /dev/$drive does not support SMART or it is disabled."
 fi
 
-echo "SN $disk_serial"
+
 
 # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or nwipe
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then

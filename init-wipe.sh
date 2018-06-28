@@ -24,6 +24,7 @@ while true; do
 		"Shell" "Show a bash shell." \
     "Badblocks" "Test a disk for errors. (Note data will be destroyed)"\
 		"Disk Info" "Run 'hdparm -I' to get information on a disk." \
+		"Image Mac" "Image a mac with mac image usb."\
 		"Shutdown" "Turn off the machine." \
 		"Exit" "Exit the wipe script" \
 		3>&1 1>&2 2>&3);
@@ -47,6 +48,9 @@ while true; do
       if [ $? == 0 ]; then 
     		hdparm -I $drive_selected | less
       fi
+
+    elif [ "$selection" == "Image Mac" ]; then
+    	bash -c "./image.sh"
 
     elif [ "$selection" == "Badblocks" ]; then
 
