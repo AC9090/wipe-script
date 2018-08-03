@@ -1,0 +1,148 @@
+#note do not run this script
+
+
+sudo debootstrap --arch=i386 --variant=minbase wheezy chroot # install the base system
+
+#something here about mountin /proc etc..
+
+chroot chroot #note second chroot is directory
+
+
+
+set up the host:
+
+	export HOME=/root
+	export LC_ALL=C # This is done to use the simplest locale
+	echo "yourHostname"  > /etc/hostname
+	#maybe dpkg-reconfigure passwd # update the root accoount for a new password
+	passwd root
+	
+	# To reduce the amount of things installed by apt
+	echo "// Recommends are as of now still abused in many packages \n \
+APT::Install-Recommends \"0\"; \n \
+APT::Install-Suggests \"0\";" > /etc/apt/apt.conf
+
+
+add "setterm -blank 0" to /etc/rc.local
+
+in /etc/apt/sources.list add non-free and contrib to the mirror
+
+	create fstab:
+
+		# <file system> <mount point>   <type>  <options>      <dump>  <pass>
+		devpts  /dev/pts  devpts  nosuid,noexec,gid=5,mode=0620  0 		0
+		tmpfs           /dev/shm        tmpfs   nosuid,nodev,mode=0755 0    0
+		sysfs   /sys      sysfs   nosuid,nodev,noexec  			0 		0
+		proc            /proc           proc    nodev,noexec,nosuid  0   0
+
+		chmod 0644 /etc/fstab
+
+required packages:
+
+
+	get the linux kernel: #this is an essential requirement obviously
+		apt-cache search linux-image
+		I use linux-image-3.2.0.4-686-pae
+
+	some basic things:
+		firmware-linux
+		firmware-linux-free
+		firmware-linux-nonfree
+		nano
+		pcregrep # for perl regex grep
+
+	need network utils:
+		ifupdown
+		netbase
+		net-tools
+		isc-dhcp-client
+
+	need wipe related stuff:
+		#fdisk
+		whiptail
+		ncurses5 # ncurses part is currently wip
+		nwipe # this may need to be downloaded manually
+		hdparm
+		smartmontools
+		lshw
+		dmidecode
+
+copy the libraries from mysql-connector-c-6/lib to /usr/lib/
+
+
+setting up network:
+
+	nano /etc/network/interfaces
+
+	edit it so it looks like:
+		auto lo
+		iface lo inet loopback
+		auto eth0
+		iface eth0 inet dhcp
+
+	will also need to tell the interfce to go up for some reason:
+		nano /etc/rc.local
+		and add "ifconfig eth0 up" in the line before  exit(0)
+
+
+free space:
+
+apt-get install localepurge
+apt-get clean
+apt-get purge?
+
+
+setting up init:
+	# Because the initial ramdisk will be used as the actual filesystem\
+	# we need to write an init script that mounts the i386fs.
+	# put this in /init and then chmod +x as ususal
+#!/bin/sh
+
+. /etc/profile
+
+/bin/busybox --install -s
+
+mkdir /dev/pts
+mkdir /dev/shm
+chmod 1777 dev/shm
+
+mount -av
+
+ln -sf /proc/mounts /etc/mtab
+
+touch /etc/mdev.conf
+
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+
+mdev -s
+
+hostname $(cat /etc/hostname)
+
+
+shell() {
+	echo "${1}Launching shell..." && exec /bin/sh
+}
+
+grep -q 'shell' /proc/cmdline && shell
+
+init=${init:-/sbin/init}
+root=${root:-/dev/hda1}
+
+
+exec ${init}
+
+shell "Failed keeping the ramdisk and executing '${init}'... "
+
+#end
+1:2345:respawn:/bin/login -f root tty1 </dev/tty1 >/dev/tty1 2>&1
+
+for marvel raid controller: https://wiki.debian.org/pata_marvell
+
+umount -lf /proc
+umount -lf /sys
+umount -lf /dev/pts
+
+clean up apt:
+	apt-get clean
+
+
