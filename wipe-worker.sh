@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 MYLOGFILENAME="/var/log/wipe.log"
-USESQL=true
+
 
 drive=$1
 source_drive=$2
@@ -46,6 +46,10 @@ rotational=`cat /sys/block/$drive/queue/rotational`
 
 form_factor=`hdparm -I /dev/$drive | grep "Form Factor" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
 rpm=`hdparm -I /dev/$drive | grep "Nominal Media Rotation Rate" | awk -F":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+
+if ! [[ $rpm =~ ^[0-9]+$ ]] ; then
+  rpm=0
+fi
 
 if [ $USESQL == true ]; then
   ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \

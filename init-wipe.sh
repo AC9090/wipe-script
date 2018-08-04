@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export USESQL=true
+
 export NEWT_COLORS='
 window=whit,black
 border=white.black
