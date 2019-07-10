@@ -104,7 +104,8 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
         exit
       fi
       
-      computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 --title "$brand" 3>&1 1>&2 2>&3)
+      service=`dmidecode | grep "System Information" -A 10 | grep "Serial Number" | awk -F ":" '{print $2}' | sed -e 's/^[ <t]*//;s/[ <t]*$//'`
+      computer_service_tag=$(whiptail --inputbox "Please enter the service tag (if it exits):" 8 78 "$service" --title "$brand" 3>&1 1>&2 2>&3)
       if (whiptail --title "$brand" --yesno "Is this computer a laptop?" 20 78 ); then  
         is_laptop=1
       else 
