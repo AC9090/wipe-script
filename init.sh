@@ -17,19 +17,23 @@ fi
 
 dmesg -n 1
 
+
 while true; do
 
 	selection=$(whiptail --title "$brand" --menu "\nPlease select an option:\n " 22 78 12 \
-		"Wipe" "Run the wipe script."\
+		"Wipe" "Run the Secure Erase script."\
+        "Nwipe" "Run Disk Wipe script."\
 		"Shell" "Show a bash shell." \
 		"Disk Info" "Run 'hdparm -I' to get information on a disk." \
 		"Shutdown" "Turn off the machine." \
 		"Exit" "Exit the wipe script" \
 		3>&1 1>&2 2>&3);
 		#"Wipe Advanced" "Run the wipe sript with advanced options."
-
   	if [ "$selection" == "Wipe" ]; then
   		bash -c "./wipe-main.sh"
+
+    elif [ "$selection" == "Nwipe" ]; then
+        bash -c "./nwipe-script.sh"
 
   	elif [ "$selection" == "Disk Info" ]; then
   		drives=`lsblk -nio KNAME,TYPE,SIZE,MODEL | grep disk | awk '{print $1}'`
@@ -58,6 +62,8 @@ while true; do
     elif [ "$selection" == "Shell" ]; then
     	echo "Type exit to return to selection menu."
     	bash
+    else
+        echo "Selection " $selection
   	fi
 
 

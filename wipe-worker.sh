@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# 10/7/19 rationalize USESQ
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit
@@ -217,15 +217,16 @@ fi
 
 if [ $USESQL == true ]; then
   ./sql-handler -u -d disk_serial="$disk_serial" wiped
-fi
-
 exitstatus=$?
-if [[ ( $exitstatus != 0 ) ]]; then
-  echo
-  echo "Could not update sql database. Shutting down..."
-  exit
-else 
-  echo "Database updated."
+  if [[ ( $exitstatus != 0 ) ]]; then
+    echo
+    echo "Could not update sql database. Shutting down..."
+    exit
+  else 
+    echo "Database updated."
+  fi
+else
+  echo "disk_serial=$disk_serial wiped"
 fi
 
 echo "Operations complete. Exiting..."
