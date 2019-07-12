@@ -136,16 +136,14 @@ ${drives_selected[@]} " 20 78); then
     done
   done
 
-
+pwd
+echo "Drives $drives_selected2"
   # Start the process handler
-  if $will_clone  &&  $has_parent ; then
-    echo $drives_selected2
-    ./process-handler -c $source_drive -p $parent $drives_selected2
-  elif  $will_clone  ; then
-    ./process-handler -c $source_drive $drives_selected2
-  elif  $has_parent ; then 
+  if  $has_parent ; then 
+    echo "Has parent"
     ./process-handler -p $parent $drives_selected2
   else 
+    echo "Has no parent"
     ./process-handler $drives_selected2
   fi
   

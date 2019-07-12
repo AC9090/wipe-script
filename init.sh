@@ -24,6 +24,7 @@ while true; do
 		"Wipe" "Run the Secure Erase script."\
         "Nwipe" "Run Disk Wipe script."\
 		"Shell" "Show a bash shell." \
+        "Unlock" "Unlock a disk." \
 		"Disk Info" "Run 'hdparm -I' to get information on a disk." \
 		"Shutdown" "Turn off the machine." \
 		"Exit" "Exit the wipe script" \
@@ -34,6 +35,9 @@ while true; do
 
     elif [ "$selection" == "Nwipe" ]; then
         bash -c "./nwipe-script.sh"
+
+    elif [ "$selection" == "Unlock" ]; then
+        bash -c "./unlock_drive.sh"
 
   	elif [ "$selection" == "Disk Info" ]; then
   		drives=`lsblk -nio KNAME,TYPE,SIZE,MODEL | grep disk | awk '{print $1}'`

@@ -1,5 +1,5 @@
 #!/bin/bash
-# 10/7/19 rationalize USESQ
+# 10/7/19 rationalize USESQL
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit
@@ -54,7 +54,9 @@ fi
 if [ $USESQL == true ]; then
   ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
 health="$disk_health" source_drive="$source_drive_serial" parent="$parent" firmware="$firmware" rotational="$rotational" transport="$transport" form_factor="$form_factor" rpm="$rpm"
-
+else
+  echo "disk_model=$disk_model disk_serial=$disk_serial disk_size=$disk_size security_erase=$security_erase enhanced_erase=$enhanced_erase \
+health=$disk_health source_drive=$source_drive_serial parent=$parent firmware=$firmware rotational=$rotational transport=$transport form_factor=$form_factor rpm=$rpm"
 fi
 
 if [ -z $disk_serial ] ; then
@@ -94,7 +96,7 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   if [ $security_erase != 0 ]; then
     # Run hdparm erase
     echo  
-    echo -e "\e[32mThis device supports security erase.\e[0m"
+    echo -e "This device supports Secure Erase."
 
     # Check if drive is frozen and sleep machine if necessary
     if [ $disk_frozen == 0 ]; then
