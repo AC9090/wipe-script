@@ -13,6 +13,8 @@ sudo apt-get install smartmontools
 
 sudo apt install libmysqlclient-dev
 
+sudo apt-get install xorriso
+
 Modify
 ---------------
 
@@ -30,12 +32,32 @@ Update github
 
 git push origin master
 
-Install it into ramdisk
------------------------
+make new image
+--------------
 
 Copy latest code to ramdisk
 
 sudo ./move_it.sh
+
+cd ramdisk_work
+
+sudo ./buildrd.sh or ./buildiso
+
+copy initrd to USB stick to transfer it to the Red Server or right click and "Make bootable USB" 
+
+On the Red Server login and make a backup of the existing image
+
+cd /var/lib/tftpboot/stable
+
+sudo cp -p initrd initrd_{date}
+
+sudo cp /media/user/{USB name}/initrd .
+
+Boot a test machine
+
+
+
+
 
 
 
