@@ -2,36 +2,13 @@
 # 
 # 25/6/19 Remove cloning
 # 10/7/19 Get is_laptop from bios
-# 10/7/19 rationalize USESQL 
-MYSERVERIP="192.168.0.1"
-VER=1.3
-echo "wipe script version $VER"
-# Exit if not run as root (sudo)
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
-  exit
-fi
-
-#Supress kernel messages
-dmesg -n 1
-
-# Initial loading message
-tagline="wipe utility for SATA drives"
-if [ -z "$1" ]; then
-  brand="Parallel $tagline"
-else
-  brand="$1 parallel $tagline"
-fi
-bold=$(tput bold)
-normal=$(tput sgr0)
-echo
-echo "Loading ${bold}$brand${normal}..."
-
-# Get some useful system variables
-current_time=`date +'%a %d %b %Y %k:%M:%S'`
-#read -p "Please enter barcode, or press CTRL C to exit: " -r BARCODE
-#BARCODE=`echo "$BARCODE" | tr -cd [:alnum:] | tr '[:lower:]' '[:upper:]'`
-export ver_nwipe=`nwipe --version`
+# 20/8/19 GD fixed a few flow controll issues. 
+#            Added sleeps to allow echos to be read.
+#            Added code to optionally allow drive to be wiped even if SQL fails.
+#
+# 26/8/19 GD Added code to select between hdparm wipe and using two-pass dd. Note the selection applies to
+#	     all selected drives
+#
 export ver_hdparm=`hdparm -V`
 
 drives=`lsblk -nio KNAME,TYPE,SIZE,MODEL | grep disk | awk '{print $1}'`
@@ -46,9 +23,10 @@ done
 
 if [ $drives_count == 0 ]; then
   # No drives detected
-  whiptail --title "$brand" --msgbox "No SATA drives detected. Select Ok to shut down." 8 78
+  whiptail --title "$brand" --msgbox "No SATA drives detected. Select Ok to exit." 8 78
   echo
-  echo "Shutting down..."
+  echo "Exiting........."
+  sleep 2
   exit
 else
 
@@ -59,8 +37,8 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
   exitstatus=$?
   if [[ ( $exitstatus != 0 ) || ( -z $drives_selected ) ]]; then
     echo
-    echo "Shutting down..."
-    #shutdown now
+    echo "Exiting........."
+    sleep 2
     exit
   fi
 
@@ -92,38 +70,54 @@ The selected drives will be wiped in parallel." 22 78 12 $drives_available 3>&1 
         is_laptop=1
       fi
       computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
-      if [ $USESQL == true ]; then
-        ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
 
-        exitstatus=$?
-        if [ $exitstatus == 1 ]; then
-          echo
-          echo "Could not update sql database. Shutting down..."
-          exit
-        elif [ $exitstatus == 2 ]; then
+# Removed USESQL usage GD 15/8/19
+
+      ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
+
+       exitstatus=$?
+
+       if [ $exitstatus == 1 ]; then
+
+          if (whiptail --title "$brand" --yesno "unable to update SQL. Do you want to continue?" 20 78 ); then  
+              echo "Continuing"
+	      sleep 2
+	  else
+              exit
+          fi
+
+       elif [ $exitstatus == 2 ]; then
           if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
-Please check you entered the correct asset number. Would you like to continue? " 20 78); then
+		Please check you entered the correct asset number. Would you like to continue? " 20 78); then
             ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model"  make="$computer_manufacturer" processor="$computer_processor"
           else 
-            echo "Shutting down..."
+            echo "Exiting........."
+	    sleep 2
             exit
           fi
-        fi
-      else
-        echo "asset_no=$parent service_tag=$computer_service_tag is_laptop=$is_laptop model=$computer_model  make=$computer_manufacturer processor=$computer_processor"
-      fi
+       else
+          ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model"  make="$computer_manufacturer" processor="$computer_processor"
+       fi
   fi
   # Wipe confirmation
   if (whiptail --title "$brand" --yesno "Are you sure you want to securely wipe the following drives:\n\n\
 ${drives_selected[@]} " 20 78); then
     echo
     echo "Confirmation given to begin wiping selected drives..."
+    sleep 2
   else
     echo
-    echo "Shutting down..."
+    echo "Exiting    ..."
+    sleep 2
     exit
   fi
 
+  if (whiptail --title "$brand" --yesno "Using secure erase - OK? Select No if you need to use dd due to \
+a problem with this computer when sleeping. " 20 78); then
+    export Use_ddwipe="No"
+  else 
+    export Use_ddwipe="Yes"
+  fi
 
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
   drives_selected2=""

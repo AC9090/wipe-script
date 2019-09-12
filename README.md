@@ -9,11 +9,11 @@ sudo apt install git
 
 sudo apt install nwipe
 
-sudo apt-get install smartmontools
+sudo apt install smartmontools
 
 sudo apt install libmysqlclient-dev
 
-sudo apt-get install xorriso
+sudo apt install xorriso
 
 Modify
 ---------------
@@ -43,7 +43,7 @@ cd ramdisk_work
 
 sudo ./buildrd.sh or ./buildiso
 
-copy initrd to USB stick to transfer it to the Red Server or right click and "Make bootable USB" 
+copy initrd to USB stick to transfer it to the Red Server or right click on iso and "Make bootable USB" 
 
 On the Red Server login and make a backup of the existing image
 
