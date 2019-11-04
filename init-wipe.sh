@@ -1,10 +1,9 @@
 #!/bin/bash
 # 11/7/19 Add nwipe as menu option
 # 14/7/19 Get shell menu option working
-# 27/8/19 GD Remove nwipe option since it has been incorporated
-#	into the main secure wipe script as an option and
-#       rerplaced by dd
+# 29/10/19 Version 2.1 Add clear in shell
 
+version=V2.1
 export NEWT_COLORS='
 window=white,black
 border=white.black
@@ -13,11 +12,11 @@ button=white,red
 '
 
 # Initial loading message
-tagline="wipe utility for SATA drives"
+tagline="Turing Trust Disk Wipe Utility $version"
 if [ -z "$1" ]; then
-  brand="Parallel $tagline"
+  brand="$tagline"
 else
-  brand="$1 parallel $tagline"
+  brand="$1 parallel $tagline $version"
 fi
 
 dmesg -n 1
@@ -25,23 +24,21 @@ dmesg -n 1
 
 while true; do
 
-# Nwipe incorporated into
-# main wipe script and replaced by dd
-#		"Nwipe" "Run Disk Wipe script."
-
 	selection=$(whiptail --title "$brand" --menu "\nPlease select an option:\n " 22 78 12 \
 		"Wipe" "Run the Secure Erase script."\
+        	"Nwipe" "Run Disk Wipe script."\
 		"Shell" "Show a bash shell." \
         	"Unlock" "Unlock a disk." \
 		"Disk Info" "Run 'hdparm -I' to get information on a disk." \
 		"Shutdown" "Turn off the machine." \
-		"Exit" "Exit the wipe script" \
+		"About" "Info about the wipe script" \
 		3>&1 1>&2 2>&3);
+		#"Wipe Advanced" "Run the wipe sript with advanced options."
   	if [ "$selection" == "Wipe" ]; then
   		bash -c "./wipe-main.sh"
 
-#    	elif [ "$selection" == "Nwipe" ]; then
-#      		 bash -c "./nwipe-script.sh"
+    	elif [ "$selection" == "Nwipe" ]; then
+       		 bash -c "./nwipe-script.sh"
 
     	elif [ "$selection" == "Unlock" ]; then
         	bash -c "./unlock_drive.sh"
@@ -71,15 +68,12 @@ while true; do
 	    shutdown -h 0
     	    exit
 
-    	elif [ "$selection" == "Exit" ]; then
-    		echo
-       		echo
-        	echo
-    	 	echo "Type exit to return to wipe utility menu."
-    		exit
+    	elif [ "$selection" == "About" ]; then
+            
+    		whiptail --title "Info" --msgbox "`cat README.txt`" 20 78 --scrolltext
 
     	elif [ "$selection" == "Shell" ]; then
-        	echo
+        	clear
         	echo
         	echo
     		echo "Type exit to return to selection menu."

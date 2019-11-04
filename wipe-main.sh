@@ -112,12 +112,12 @@ ${drives_selected[@]} " 20 78); then
     exit
   fi
 
-  if (whiptail --title "$brand" --yesno "Using secure erase - OK? Select No if you need to use dd due to \
-a problem with this computer when sleeping. " 20 78); then
+  #if (whiptail --title "$brand" --yesno "Using secure erase - OK? Select No if you need to use dd due to \
+  #a problem with this computer when sleeping. " 20 78); then
     export Use_ddwipe="No"
-  else 
-    export Use_ddwipe="Yes"
-  fi
+# else 
+#    export Use_ddwipe="Yes"
+# fi
 
 # Since implementation of later code seems to end up doubling up the "/dev/" in the paths it is removed
   drives_selected2=""

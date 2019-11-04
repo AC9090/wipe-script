@@ -1,9 +1,14 @@
 #!/bin/bash
 # July 2019 philn
 # August 2019 - GD added init
+# 29/10/19 PN added nwipe-script.sh
+# 3/11/19 PN added about 
 #
-cp -p .bashrc init-wipe.sh process-handler sql-copy sql-handler unlock_drive.sh wipe-main.sh wipe-worker.sh ramdisk_work/chroot/root
-cp -p init ramdisk_work/chroot
-ls -la ramdisk_work/chroot/root
-ls -la ramdisk_work/chroot | grep init
+ramdisk="ramdisk"
+cp -p .bashrc init-wipe.sh process-handler sql-copy sql-handler unlock_drive.sh wipe-main.sh wipe-worker.sh nwipe-script.sh $ramdisk/chroot/root
+cp -p init $ramdisk/chroot
+cp -p $ramdisk/README.txt $ramdisk/chroot/root
+echo ls -la $ramdisk/chroot/root
+ls -la $ramdisk/chroot/root
+ls -la $ramdisk/chroot | grep init
 

@@ -1,13 +1,14 @@
 #!/bin/bash
 #
 # GD 26/8/19 Amended to allow dd to have been chosen, rather than just defaulted to at the end.
+# PN 30/10/19 moved log to home directory. Added log info
 #
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit
 fi
 
-MYLOGFILENAME="/var/log/wipe.log"
+MYLOGFILENAME="wipe.log"
 touch $MYLOGFILENAME
 NWIPEVERSION=`nwipe --version`
 Need_dd="No"
@@ -55,7 +56,7 @@ if ! [[ $rpm =~ ^[0-9]+$ ]] ; then
   rpm=0
 fi
 
-
+echo "disk_model=$disk_model disk_serial=$disk_serial disk_size=$disk_size security_erase=$security_erase enhanced_erase=$enhanced_erase" >> $MYLOGFILENAME
 #Removed USESQL processing GD 15/8/19
 
   ./sql-handler -u -d disk_model="$disk_model" disk_serial="$disk_serial" disk_size="$disk_size" security_erase="$security_erase" enhanced_erase="$enhanced_erase" \
