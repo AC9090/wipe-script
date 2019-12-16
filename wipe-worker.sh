@@ -2,6 +2,7 @@
 #
 # GD 26/8/19 Amended to allow dd to have been chosen, rather than just defaulted to at the end.
 # PN 30/10/19 moved log to home directory. Added log info
+# PN 15/12/19 removed dd
 #
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -75,7 +76,7 @@ if [ -z $disk_serial ] ; then
   echo "Could not retrieve disk serial."
   echo "This could indicate the disk has failed"
   echo "ER Disk serial unknown."
-  sleep 2
+  sleep 10
   exit
 fi
 
@@ -108,8 +109,6 @@ fi
 # If drive is healthy or if SMART is unavailable, check for security erase support and wipe using hdparm or dd
 if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
   if [ $security_erase != 0 ]; then
-    # Run hdparm erase unless Use_ddwipe has already been set
-    #
     echo  
     echo -e "This device supports Secure Erase."
 
@@ -181,46 +180,12 @@ if [ $smart_check == 0 ] || [ $disk_health == PASSED ]; then
         echo "Failed to unlock disk."
         echo
       fi
-     fi 
-    else
-      #
-      # Run dd    
-      #
-      Need_dd="Yes"
-      echo "SE Disabled"
-     fi 
-   fi
-if [ $Use_ddwipe == "Yes" ] || [ $Need_dd == "Yes" ]; then
-  if [ $Use_ddwipe == "Yes" ]; then
-    echo "dd wipe was chosen"
+    fi 
   else
-    echo -e "Device /dev/$drive does not support security erase. Falling back to dd    .."
-  fi
-  echo "ET Unknown"
-  echo -e "Note that each pass of dd will run at about 25MB/s or about 90GB/hr \n  To cancel before finish: \n wait until all other disks are done \n then press CTRL^c "
-  sleep 3s
-  echo
-  echo "Random data pass starting"
-  dd if=/dev/urandom of=/dev/$drive bs=65536 status=progress 2>&1
-  echo "Zero pass starting"
-  dd if=/dev/zero of=/dev/$drive bs=65536 status=progress 2>&1
-  MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
-  echo "dd wipe Finished on: $MYTIMEVAR" >> $MYLOGFILENAME
-
-  if [ $? -eq 0 ]; then
-    echo
-    echo "dd completed successfully."
-    echo
-    sleep 2
-  else
-    echo
-    echo "ER dd failed with error: $?."
-    echo
-    sleep 2
-    exit
-  fi
+    echo "SE Disabled"
+    echo "Secure Erase not supported. Use nwipe"
+  fi 
 fi
-
 #
 # If SMART is supported and drive is unhealthy, print message to replace drive
 #
@@ -233,7 +198,7 @@ fi
 
 MYTIMEVAR=`date +'%a %d %b %Y %k:%M:%S'`
 
-# Cloning stage.
+# Cloning stage. No longer used
 if [ "$source_drive" == "NONE" ]; then
   echo
   echo "Wipe stage complete. No cloning source drive selected."

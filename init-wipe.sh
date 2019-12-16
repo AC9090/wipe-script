@@ -2,8 +2,9 @@
 # 11/7/19 Add nwipe as menu option
 # 14/7/19 Get shell menu option working
 # 29/10/19 Version 2.1 Add clear in shell
+# 15/12/19 Version 2.2 disable ipv6 in /etc/sysctl.conf
 
-version=V2.1
+version=V2.2
 export NEWT_COLORS='
 window=white,black
 border=white.black

@@ -1,9 +1,8 @@
 #!/bin/bash
 # 3/11/19 philn
-# 15/8/19 Removed USESQL usage GD 
 # V1.1 philn. Add wipe to sqlconnect disk. This automagically adds timestamp
 MYSERVERIP="192.168.0.1"
-VER=1.2
+VER=1.1
 NWIPELOG=nwipe.log
 MYLOGFILENAME="wipe.log"
 rm $MYLOGFILENAME
@@ -48,18 +47,17 @@ has_parent=false
       fi
       computer_processor=`lshw -short | grep -m1 processor | awk '{for (i=3; i<NF; i++) printf $i " "; if (NF >= 4) print $NF; }'`
 
-
+# Removed USESQL usage GD 15/8/19
       echo "asset_no=$parent service_tag=$computer_service_tag is_laptop=$is_laptop model=$computer_model  make=$computer_manufacturer processor=$computer_processor" >> $MYLOGFILENAME
       ./sql-handler -i -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" make="$computer_manufacturer" model="$computer_model" processor="$computer_processor"
       exitstatus=$?
       echo "SQL status $exitstatus" >> $MYLOGFILENAME
       if [ $exitstatus == 1 ]; then
-          if (whiptail --title "$brand" --yesno "unable to update SQL so this wipe will not be recorded\n\nDo you want to abort and investigate?" 20 78 ); then  
-              echo "Aborting"
-	         exit
-	      else
+          if (whiptail --title "$brand" --yesno "unable to update SQL. Do you want to continue?" 20 78 ); then  
               echo "Continuing"
-              sleep 10 
+	         sleep 2
+	      else
+              exit
           fi
       elif [ $exitstatus == 2 ]; then
           if (whiptail --title "$brand" --yesno "The asset number $parent is already recorded in the database. \
@@ -74,11 +72,8 @@ has_parent=false
           ./sql-handler -u -c asset_no="$parent" service_tag="$computer_service_tag" is_laptop="$is_laptop" model="$computer_model"  make="$computer_manufacturer" processor="$computer_processor"
       fi
   fi
-# Run nwipe
-rm $NWIPELOG
-nwipe -l $NWIPELOG -m zero
 
-wiped_drives=`cat $NWIPELOG | grep Blanked | awk '{print $7}'| tr -d \. | tr -d \'`
+wiped_drives=`dir /dev/sd* | tr -d 1`
 
 for drive in $wiped_drives; do
   echo "Wiped $drive" >> $MYLOGFILENAME
