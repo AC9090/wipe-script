@@ -48,16 +48,6 @@ CREATE TABLE `computer` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `computer`
---
-
-LOCK TABLES `computer` WRITE;
-/*!40000 ALTER TABLE `computer` DISABLE KEYS */;
-INSERT INTO `computer` VALUES ('10000648','10000648',NULL,'HP xw8400 Workstation (PS955AV)','Intel(R) Xeon(R) CPU X5355 @ 2.66GHz',0,'0000-00-00 00:00:00');
-/*!40000 ALTER TABLE `computer` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `disk`
 --
 
