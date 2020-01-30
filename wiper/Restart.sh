@@ -9,3 +9,4 @@ sudo service isc-dhcp-server status
 sudo service tftpd-hpa status
 sudo service smbd status
 sudo service nmbd restart
+sudo service nmbd status
